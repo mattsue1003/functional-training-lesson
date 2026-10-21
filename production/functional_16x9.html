@@ -397,7 +397,7 @@ scene('s0', (g, T, A, P) => {
   const lab1 = R(g, 1120, 520, A(0, .3), A(0, 2.4), 'pop'); HW(lab1, 0, 0, '坐著抬膝', 62, '#2B231D'); brush(lab1, 0, 40, 240);
   const lab2 = R(g, 1120, 600, A(0, 2.4), A(2, 0), 'pop'); HW(lab2, 0, 0, '坐著伸膝', 62, '#2B231D'); brush(lab2, 0, 40, 240);
   const lab3 = R(g, 1120, 440, A(1, .2), A(2, 0), 'pop', 'ding'); HW(lab3, 0, 0, '腿力 ↑', 70, '#0F7A5E');
-  const cl = cloud(g, 760, 210); const clI = {g: cl.g, t0: A(2, 1.7), t1: A(3, 1.0), kind: 'drop'}; ITEMS.push(clI); CUES.push({t: clI.t0, type: 'wrong'});
+  const clG = R(g, 880, 190, A(2, 1.7), A(3, 1.0), 'drop', 'wrong'); const cl = cloud(clG, 0, 0);
   const q = R(g, 1000, 300, A(3, 0), 1e9, 'pop'); HW(q, 0, 0, '？', 150, '#C9573A', 'middle');
   return t => {
     const lt = t;

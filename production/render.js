@@ -55,6 +55,7 @@ async function main() {
     await Promise.all([...Array(W)].map(async (_, k) => {
       const a = k * per, b = Math.min(N, a + per);
       if (a >= b) return;
+      if (process.env.ONLY != null && +process.env.ONLY !== k) return;   // ONLY=k：只重算第 k 段
       const {browser, page} = await open();
       const out = path.join(SEGS, `seg_${String(k).padStart(2, '0')}.mp4`);
       const ff = spawn(FF, ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
