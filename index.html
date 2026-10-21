@@ -1,0 +1,837 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>站起來才算數</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* 版面：像貼滿手寫卡片的牆——影片區桌機為「16:9 影片＋作答欄」雙欄，其餘單欄長頁 */
+:root{
+  --bg:#F6EFE3; --surface:#FFFDF8; --sunk:#EDE2D1; --ink:#2B231D; --muted:#6A5C4F; --line:#E2D4C0;
+  --accent:#B9442A; --accent-ink:#FFFFFF; --accent-soft:#F8DED3;
+  --teal:#2E6E62; --teal-soft:#DCEEE8; --gold:#E3B04B; --gold-soft:#FBEFD2;
+  --good:#2E6E62; --good-soft:#DCEEE8; --bad:#B9442A; --bad-soft:#F8DED3; --warn:#8F6200; --warn-soft:#FBEFD2;
+  --video-bg:#1B1612; --shadow:0 10px 26px rgba(90,60,30,.12);
+  --f-display:"LXGW WenKai TC","Kaiti TC","PingFang TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1B1713; --surface:#25201B; --sunk:#2F2923; --ink:#F1E9DD; --muted:#B9AC9C; --line:#3D352D;
+  --accent:#E57A5C; --accent-ink:#1B0D06; --accent-soft:#40261D;
+  --teal:#6FC3AE; --teal-soft:#1D3A33; --gold:#F0C468; --gold-soft:#3A3020;
+  --good:#6FC3AE; --good-soft:#1D3A33; --bad:#E57A5C; --bad-soft:#40261D; --warn:#F0C468; --warn-soft:#3A3020;
+  --video-bg:#0E0B09; --shadow:0 10px 26px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1B1713; --surface:#25201B; --sunk:#2F2923; --ink:#F1E9DD; --muted:#B9AC9C; --line:#3D352D;
+  --accent:#E57A5C; --accent-ink:#1B0D06; --accent-soft:#40261D;
+  --teal:#6FC3AE; --teal-soft:#1D3A33; --gold:#F0C468; --gold-soft:#3A3020;
+  --good:#6FC3AE; --good-soft:#1D3A33; --bad:#E57A5C; --bad-soft:#40261D; --warn:#F0C468; --warn-soft:#3A3020;
+  --video-bg:#0E0B09; --shadow:0 10px 26px rgba(0,0,0,.35); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.3;text-wrap:balance;margin:0;font-weight:700}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}
+.wrap{max-width:1160px;margin:0 auto}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)))}
+.topbar .wrap{display:flex;align-items:center;gap:12px;padding:10px max(16px,env(safe-area-inset-left,0px));flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:700;font-size:20px;white-space:nowrap}
+.steps{display:flex;gap:6px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.steps a{white-space:nowrap;text-decoration:none;color:var(--muted);font-size:15px;font-weight:500;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+.steps a.done{color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,transparent)}
+.stars{font-family:var(--f-data);font-weight:600;font-size:16px;white-space:nowrap;background:var(--accent-soft);color:var(--accent);padding:5px 12px;border-radius:999px}
+
+section{padding-block:44px 8px}
+.sec-head{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:center;border-bottom:2px dashed var(--line);padding-bottom:14px;margin-bottom:22px}
+.sec-head .no{grid-row:span 2;width:54px;height:54px;border-radius:50%;background:var(--ink);color:var(--bg);font-family:var(--f-data);font-weight:600;font-size:20px;display:grid;place-items:center}
+.sec-head h2{font-size:clamp(26px,4vw,34px)}
+.sec-head p{color:var(--muted);font-size:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:14px;padding:12px 20px;font-weight:700;font-size:17px;background:var(--accent);color:var(--accent-ink);text-decoration:none}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.small{padding:8px 14px;font-size:15px;border-radius:12px}
+.btn.teal{background:var(--teal);color:var(--bg)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* 開頭：像貼在牆上的便條 */
+.hero{padding-block:36px 10px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:32px;align-items:center}
+.eyebrow{font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--accent)}
+.hero h1{font-size:clamp(42px,7.4vw,72px);margin:8px 0 14px}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero .lead{font-size:19px;color:var(--muted);max-width:34em}
+.hero .row{margin-top:22px}
+.notes{position:relative;display:grid;gap:14px}
+.note{background:#FBF3DF;color:#2B231D;border:2px solid #2B231D;border-radius:10px;padding:16px 20px;font-family:var(--f-display);font-size:24px;font-weight:700;box-shadow:var(--shadow);position:relative}
+.note:nth-child(1){transform:rotate(-1.6deg)} .note:nth-child(2){transform:rotate(1.2deg);margin-left:28px} .note:nth-child(3){transform:rotate(-.6deg);margin-left:8px}
+.note::before{content:"";position:absolute;top:-12px;left:50%;width:80px;height:22px;margin-left:-40px;background:rgba(227,176,75,.6);transform:rotate(-3deg)}
+.note small{display:block;font-family:var(--f-body);font-size:15px;font-weight:500;color:#6A5C4F}
+.note b{color:#B9442A}
+.howto{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:26px}
+.howto div{background:var(--sunk);border-radius:16px;padding:14px 16px;font-size:15px;color:var(--muted)}
+.howto b{display:block;color:var(--ink);font-size:19px;font-family:var(--f-display)}
+.howto i{font-style:normal;font-family:var(--f-data);color:var(--accent);font-weight:600;margin-right:6px}
+
+/* 是非題 */
+.tf{display:grid;gap:10px}
+.tf-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.tf-item .n{font-family:var(--f-data);color:var(--muted);font-weight:600}
+.tf-item .s{font-weight:500}
+.tf-btns{display:flex;gap:8px}
+.tf-btns button{width:52px;height:46px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);font-size:20px;font-weight:700}
+.tf-btns button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tf-btns button.right{background:var(--good);color:var(--bg);border-color:var(--good)}
+.tf-btns button.wrong{background:var(--bad);color:var(--bg);border-color:var(--bad)}
+.tf-fb{grid-column:2 / -1;font-size:15px;color:var(--muted)}
+.tf-fb b{color:var(--good)} .tf-fb b.x{color:var(--bad)}
+.tasks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.task{border:2px dashed color-mix(in srgb,var(--accent) 45%,transparent);border-radius:16px;padding:14px 16px;background:var(--surface)}
+.task b{display:block;font-family:var(--f-display);font-size:19px;color:var(--accent)}
+.notice{margin-top:14px;padding:14px 18px;border-radius:14px;background:var(--good-soft);font-weight:500}
+
+/* 看影片（16:9） */
+.watch{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:26px;align-items:start}
+.player-col{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px);display:grid;gap:12px}
+.player{aspect-ratio:16/9;width:100%;max-width:100%;background:var(--video-bg);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+.player video{width:100%;height:100%;display:block;background:var(--video-bg)}
+.chaps{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.chaps button{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 2px;font-size:13px;font-weight:700;line-height:1.3;min-width:0}
+.chaps button span{display:block;font-family:var(--f-data);font-size:15px}
+.chaps button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chaps button.done:not(.on){border-color:var(--good);color:var(--good)}
+.qpanel{display:grid;gap:16px;min-width:0}
+.qhead{display:grid;gap:4px}
+.qhead .k{font-family:var(--f-data);font-size:14px;color:var(--accent);font-weight:600;letter-spacing:.06em}
+.qhead h3{font-size:clamp(25px,3.4vw,31px)}
+.ended{padding:12px 16px;border-radius:14px;background:var(--accent-soft);font-weight:700}
+.teach{border-left:5px solid var(--teal);background:color-mix(in srgb,var(--teal) 9%,var(--surface));border-radius:0 14px 14px 0;padding:12px 16px;font-size:15.5px}
+.teach b{color:var(--teal)}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px}
+.q .qt{font-weight:700;font-size:18.5px;margin-bottom:12px}
+.q .qt .qn{font-family:var(--f-data);color:var(--muted);margin-right:8px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.opt{text-align:left;border:1.5px solid var(--line);background:var(--bg);border-radius:14px;padding:12px 14px;font-size:17px;font-weight:500;display:flex;gap:10px;align-items:baseline}
+.opt .lt{font-family:var(--f-data);color:var(--muted);font-weight:600}
+.opt:hover:not([disabled]){border-color:var(--accent)}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.dim{opacity:.55}
+.opt[disabled]{cursor:default}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
+.srow:last-child{border-bottom:0}
+.srow .x{font-weight:500}
+.bins{display:flex;gap:6px}
+.bins button{border:1.5px solid var(--line);background:var(--bg);border-radius:10px;padding:6px 12px;font-weight:700;font-size:15px;white-space:nowrap}
+.bins button.pick-right{background:var(--good);border-color:var(--good);color:var(--bg)}
+.bins button.pick-wrong{background:var(--bad);border-color:var(--bad);color:var(--bg)}
+.bins button.was-right{border-color:var(--good);color:var(--good)}
+.spot{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sc{border:1.5px solid var(--line);border-radius:16px;padding:14px;background:var(--bg);display:grid;gap:10px;align-content:start}
+.sc .x{font-family:var(--f-display);font-size:21px;font-weight:700}
+.sc .bins button{flex:1}
+.sc.res-ok{border-color:var(--good)} .sc.res-bad{border-color:var(--bad)}
+.sc .why{font-size:15px;color:var(--muted)}
+.blanks{display:grid;gap:10px;margin-bottom:14px}
+.blank-line{font-size:19px;font-weight:500}
+.slot{display:inline-grid;place-items:center;min-width:76px;height:42px;margin:0 6px;padding:0 10px;border:2px dashed var(--accent);border-radius:12px;background:var(--bg);font-family:var(--f-display);font-weight:700;font-size:21px;vertical-align:middle}
+.slot.filled{border-style:solid}
+.slot.right{border-color:var(--good);background:var(--good-soft)} .slot.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.bank{display:flex;flex-wrap:wrap;gap:8px}
+.bank button{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;min-width:64px;height:44px;padding:0 12px;font-family:var(--f-display);font-weight:700;font-size:20px}
+.bank button[disabled]{opacity:.35}
+.olist{display:grid;gap:8px}
+.oi{display:flex;gap:12px;align-items:center;text-align:left;border:1.5px solid var(--line);background:var(--bg);border-radius:14px;padding:11px 14px;font-weight:500}
+.oi .badge{flex:none;width:32px;height:32px;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;font-family:var(--f-data);font-weight:600}
+.oi.picked .badge{background:var(--ink);color:var(--bg);border:0}
+.oi.right .badge{background:var(--good);color:var(--bg)} .oi.wrong .badge{background:var(--bad);color:var(--bg)}
+.fb{margin-top:14px;padding:14px 16px;border-radius:14px;font-size:16px;display:grid;gap:8px}
+.fb.good{background:var(--good-soft)} .fb.bad{background:var(--warn-soft)}
+.fb .h{font-weight:700} .fb.good .h{color:var(--good)} .fb.bad .h{color:var(--warn)}
+.qnav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.toggle{display:inline-flex;gap:8px;align-items:center;font-size:15px;color:var(--muted);cursor:pointer}
+.toggle input{width:20px;height:20px;accent-color:var(--teal)}
+
+.vote{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.vote button{border:1.5px solid var(--line);background:var(--surface);border-radius:16px;padding:16px;text-align:left;font-weight:700;font-size:19px;font-family:var(--f-display)}
+.vote button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.gain{display:grid;gap:12px;margin-top:16px}
+.bar{display:grid;grid-template-columns:72px minmax(0,1fr) 64px;gap:12px;align-items:center;font-weight:700}
+.bar .track{height:22px;border-radius:11px;background:var(--sunk);overflow:hidden}
+.bar .fill{height:100%;border-radius:11px;background:var(--muted)}
+.bar.post .fill{background:var(--good)}
+.bar .v{font-family:var(--f-data)}
+.verdict{font-weight:700;color:var(--good)}
+
+.fourq{display:grid;gap:30px}
+.qblock h3{font-size:26px;display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.qblock h3 .ix{flex:none;width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:var(--f-data);font-size:18px;display:grid;place-items:center}
+.qblock > p{color:var(--muted);margin-bottom:14px}
+.flips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.flips details{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.flips summary{cursor:pointer;font-weight:700;list-style:none;font-family:var(--f-display);font-size:19px}
+.flips summary::-webkit-details-marker{display:none}
+.flips summary::after{content:"翻開看答案";display:block;font-family:var(--f-body);font-size:13px;color:var(--accent);font-weight:500;margin-top:4px}
+.flips details[open] summary::after{content:"收起"}
+.flips details p{margin-top:8px;color:var(--muted);font-size:15.5px}
+
+/* 30 秒坐站測試 */
+.test{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:20px;align-items:start}
+.how{margin:0;padding-left:1.3em;display:grid;gap:6px}
+.how li::marker{font-family:var(--f-data);color:var(--accent);font-weight:600}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+.fld{display:grid;gap:4px}
+.fld label{font-size:15px;font-weight:700}
+.fld input,.fld select{font:inherit;font-family:var(--f-data);font-size:18px;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+.timer{display:grid;justify-items:center;gap:14px;text-align:center}
+.ring{position:relative;width:210px;height:210px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .t{position:absolute;inset:0;display:grid;place-items:center;align-content:center}
+.ring .t b{font-family:var(--f-data);font-size:64px;line-height:1}
+.ring .t small{font-size:14px;color:var(--muted)}
+.counter{font-family:var(--f-display);font-size:30px;font-weight:700}
+.counter b{font-family:var(--f-data);font-size:56px;color:var(--accent);margin:0 6px}
+.tap{width:100%;max-width:340px;padding:22px;border-radius:20px;border:0;background:var(--teal);color:var(--bg);font-family:var(--f-display);font-size:28px;font-weight:700}
+.tap[disabled]{opacity:.4}
+.result{padding:14px 18px;border-radius:14px;font-weight:500;text-align:left;width:100%}
+.result.low{background:var(--bad-soft)} .result.ok{background:var(--good-soft)} .result.na{background:var(--sunk)}
+.result b{font-family:var(--f-display);font-size:21px}
+.fine{font-size:14px;color:var(--muted)}
+
+.pledges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pledges label{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;font-weight:500}
+.pledges label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.pledges input{width:22px;height:22px;margin-top:3px;flex:none;accent-color:var(--accent)}
+.pledges small{display:block;color:var(--muted);font-weight:400;font-size:14px}
+.cardmaker{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;margin-top:18px;align-items:start}
+.ticket{background:#FBF3DF;color:#2B231D;border:2px solid #2B231D;border-radius:12px;padding:24px;position:relative;transform:rotate(-.6deg)}
+.ticket::before{content:"";position:absolute;top:-12px;left:50%;width:90px;height:24px;margin-left:-45px;background:rgba(227,176,75,.6);transform:rotate(-3deg)}
+.ticket h4{font-size:26px;margin:0 0 4px}
+.ticket .meta{color:#6A5C4F;font-size:15px;margin-bottom:10px}
+.ticket ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.ticket li{display:flex;gap:10px;font-weight:500}
+.ticket li::before{content:"";flex:none;width:18px;height:18px;border:2px solid #B9442A;border-radius:5px;margin-top:5px}
+.ticket .empty{color:#6A5C4F}
+.ticket .foot{margin-top:14px;padding-top:10px;border-top:1px dashed #C9B89E;font-size:13px;color:#6A5C4F}
+.res-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.res-grid .card{display:grid;gap:6px;align-content:start}
+.res-grid h4{font-size:21px}
+.res-grid p{color:var(--muted);font-size:15.5px}
+.tel{font-family:var(--f-data);font-size:26px;font-weight:600;user-select:all}
+.checklist{margin:0;padding-left:1.3em;display:grid;gap:4px}
+footer{margin-top:44px;padding-block:24px 40px;border-top:1px solid var(--line);color:var(--muted);font-size:14px;display:grid;gap:8px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;z-index:30;max-width:calc(100% - 32px)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+@media (max-width:900px){
+  .hero,.watch,.test,.cardmaker{grid-template-columns:1fr}
+  .player-col{position:static}
+  .flips{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tasks{grid-template-columns:1fr}
+  .howto{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){
+  body{font-size:16.5px}
+  .opts,.spot,.pledges,.vote,.res-grid,.flips,.fields{grid-template-columns:1fr}
+  .tf-item{grid-template-columns:auto minmax(0,1fr)}
+  .tf-btns{grid-column:2}
+  .tf-fb{grid-column:1 / -1}
+  .srow{grid-template-columns:1fr}
+  .steps{order:3;flex-basis:100%}
+  .stars{margin-left:auto}
+  .chaps{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media (prefers-reduced-motion:no-preference){
+  .fb,.notice,.ended{animation:pop .25s ease-out}
+  @keyframes pop{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}
+}
+</style>
+
+<header class="topbar">
+  <div class="wrap">
+    <span class="brand">站起來才算數</span>
+    <nav class="steps" aria-label="學習步驟">
+      <a href="#pre" data-step="pre">① 課前猜一猜</a>
+      <a href="#watch" data-step="watch">② 分段看影片</a>
+      <a href="#post" data-step="post">③ 課後再測</a>
+      <a href="#act" data-step="act">④ 化為行動</a>
+    </nav>
+    <span class="stars" id="stars" aria-live="polite">⭐ 0 / 0</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">功能性訓練・影片教學互動課</div>
+      <h1>坐著練，<br>就夠了嗎？</h1>
+      <p class="lead">一支 16:9 動畫衛教影片切成 7 段，每段看完回答 2–3 題。最後做一次「30 秒坐站測試」，訂一張自己做得到的練習卡。</p>
+      <div class="row">
+        <a class="btn" href="#pre">先猜猜看 ↓</a>
+        <a class="btn ghost" href="#watch">直接看影片</a>
+      </div>
+    </div>
+    <div class="notes" aria-label="三個重點">
+      <div class="note">防跌，<b>站著練</b><small>跌倒大多發生在走路、站著、坐下時</small></div>
+      <div class="note">轉位，<b>練坐到站</b><small>椅子、馬桶、汽車、沙發都是同一個動作</small></div>
+      <div class="note">撿東西，<b>也是訓練</b><small>一手扶穩、屁股往後推、伸手往下拿</small></div>
+    </div>
+  </div>
+  <div class="howto">
+    <div><i>1</i><b>課前猜一猜</b>8 題是非題，先記下直覺</div>
+    <div><i>2</i><b>分段看影片</b>每段看完就作答，可回看</div>
+    <div><i>3</i><b>課後再測</b>同樣 8 題，看自己進步多少</div>
+    <div><i>4</i><b>化為行動</b>30 秒坐站測試＋練習卡</div>
+  </div>
+
+  <section id="pre">
+    <div class="sec-head"><div class="no">01</div><h2>課前猜一猜</h2><p>憑直覺回答就好，答案先保密，看完影片再測一次。</p></div>
+    <div class="tf" id="preList"></div>
+    <div id="preDone"></div>
+    <h3 style="font-size:23px;margin-top:28px">看片任務：邊看邊找這 3 個答案</h3>
+    <div class="tasks">
+      <div class="task"><b>任務一</b>坐著抬膝、伸膝，算不算功能性訓練？</div>
+      <div class="task"><b>任務二</b>為什麼想防跌，要站著練？</div>
+      <div class="task"><b>任務三</b>長照「復能」從哪裡開始練？</div>
+    </div>
+  </section>
+
+  <section id="watch">
+    <div class="sec-head"><div class="no">02</div><h2>分段看影片，看完就作答</h2><p>答錯沒關係，按「回看這段」就能跳回影片的那一段。</p></div>
+    <div class="watch">
+      <div class="player-col">
+        <div class="player"><video id="vid" controls playsinline preload="metadata"></video></div>
+        <div class="chaps" id="chaps" aria-label="影片段落"></div>
+      </div>
+      <div class="qpanel" id="qpanel"></div>
+    </div>
+  </section>
+
+  <section id="post">
+    <div class="sec-head"><div class="no">03</div><h2>課後再測</h2><p>先投一票，再把課前的 8 題重新回答一次。</p></div>
+    <div class="card">
+      <h3 style="font-size:23px">電影法投票：你最想先從哪一個開始？</h3>
+      <p style="color:var(--muted);margin:4px 0 14px">這題沒有標準答案，選你最做得到的。</p>
+      <div class="vote" id="vote"></div>
+      <div id="voteFb"></div>
+    </div>
+    <div class="tf" id="postList" style="margin-top:18px"></div>
+    <div id="gain"></div>
+  </section>
+
+  <section id="act">
+    <div class="sec-head"><div class="no">04</div><h2>四大提問：把知識變成行動</h2><p>了解什麼、對我有什麼好處、我能做什麼、我能得到什麼。</p></div>
+    <div class="fourq">
+      <div class="qblock">
+        <h3><span class="ix">1</span>我了解了什麼？</h3>
+        <p>先自己想答案，再翻開對照。</p>
+        <div class="flips" id="flips"></div>
+      </div>
+
+      <div class="qblock">
+        <h3><span class="ix">2</span>對我有什麼好處？先測一次自己的起點</h3>
+        <p>「30 秒坐站測試」是美國 CDC 防跌篩檢（STEADI）常用的腿力與耐力測試，適用 60 歲以上。</p>
+        <div class="test">
+          <div class="card">
+            <h4 style="font-size:21px;margin-bottom:8px">怎麼測</h4>
+            <ol class="how">
+              <li>用<b>沒有輪子、靠牆放穩</b>的椅子，坐在椅子中間。</li>
+              <li>雙手交叉放在胸前，腳平放地上。</li>
+              <li>按「開始」，30 秒內盡量完整<b>站直再坐下</b>，每站起來一次就按一下「＋1」。</li>
+              <li>旁邊要有人陪。需要用手撐才站得起來，就先停止，請專業人員評估。</li>
+            </ol>
+            <div class="fields">
+              <div class="fld"><label for="t-sex">性別</label><select id="t-sex"><option value="f">女</option><option value="m">男</option></select></div>
+              <div class="fld"><label for="t-age">年齡</label><input id="t-age" type="number" inputmode="numeric" min="40" max="110" value="72"></div>
+              <div class="fld" style="grid-column:1 / -1"><label for="t-manual">已經自己數好了？直接輸入次數</label><input id="t-manual" type="number" inputmode="numeric" min="0" max="40" placeholder="例如 11"></div>
+            </div>
+          </div>
+          <div class="card timer">
+            <div class="ring" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--sunk)" stroke-width="10"/><circle id="ringArc" cx="60" cy="60" r="52" fill="none" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="0"/></svg>
+              <div class="t"><b id="secLeft">30</b><small>秒</small></div>
+            </div>
+            <div class="counter" aria-live="polite">站起來<b id="reps">0</b>次</div>
+            <div class="row" style="justify-content:center">
+              <button type="button" class="btn" id="startT">開始 30 秒</button>
+              <button type="button" class="btn ghost" id="resetT">重來</button>
+            </div>
+            <button type="button" class="tap" id="tapRep" disabled>＋1 站起來了</button>
+            <div class="result na" id="testRes" aria-live="polite"><b>測完會在這裡看到結果</b><br>和同年齡、同性別的參考值比較。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="qblock">
+        <h3><span class="ix">3</span>我能做什麼？承諾牆</h3>
+        <p>勾選這週做得到的練習（可複選），會自動放進你的練習卡。</p>
+        <div class="pledges" id="pledges"></div>
+        <div class="cardmaker">
+          <div class="card">
+            <div class="fld"><label for="f-date">我從哪一天開始</label><input id="f-date" type="date"></div>
+            <div class="fld" style="margin-top:12px"><label for="f-who">我這麼做，是為了</label><input id="f-who" type="text" maxlength="24" placeholder="例如：自己上廁所、帶孫子去公園"></div>
+            <div class="row" style="margin-top:16px">
+              <button type="button" class="btn" id="saveCard" hidden>儲存練習卡圖片</button>
+              <button type="button" class="btn ghost" id="copyCard">複製文字，貼到 LINE</button>
+            </div>
+            <textarea id="copyFallback" class="sr" aria-hidden="true" tabindex="-1"></textarea>
+          </div>
+          <div class="ticket" id="ticket"></div>
+        </div>
+      </div>
+
+      <div class="qblock">
+        <h3><span class="ix">4</span>我能得到什麼？可以用的資源</h3>
+        <p>把資源用起來，練習才走得長久。</p>
+        <div class="res-grid">
+          <div class="card"><h4>長照復能：專業人員到家教</h4><p>長照 2.0 專業服務的「復能照護」，由職能治療師、物理治療師等專業人員到家，針對你想做回的日常活動（如廁、洗澡、移位、走路）設定目標，在真實情境裡練習，也教家人怎麼幫。</p></div>
+          <div class="card"><h4>1966 長照專線</h4><p>撥打申請，照顧管理專員會到府評估需要哪些服務。</p><div class="row"><span class="tel">1966</span><button type="button" class="btn ghost small" data-act="copy" data-text="1966">複製號碼</button></div></div>
+          <div class="card"><h4>練習前的安全檢查</h4>
+            <ul class="checklist"><li>椅子穩固、沒有輪子，最好靠牆</li><li>扶的是椅背或流理台，不是會滑的東西</li><li>穿防滑的鞋，地面乾、沒有雜物</li><li>剛開始練，旁邊有人陪</li></ul></div>
+          <div class="card"><h4>這些情況，先請醫師或治療師評估</h4>
+            <ul class="checklist"><li>練習時頭暈、胸悶、喘不過氣</li><li>最近一年跌倒過，或很怕跌倒</li><li>需要用手撐才站得起來</li><li>關節正在痛、腫，或剛開過刀</li></ul></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>本網頁為一般衛教資訊，不能取代醫師或治療師的評估。30 秒坐站測試結果僅供自我了解。</p>
+    <p>資料來源：de Vreede 等（2005, J Am Geriatr Soc）；Sherrington 等（2019, Cochrane 系統性回顧）；Robinovitch 等（2013, Lancet）；World Guidelines for Falls Prevention（2022, Age and Ageing）；CDC STEADI 30 秒坐站測試；衛生福利部長照專業服務（復能照護）。</p>
+    <p>設計者｜愛迪樂　鍾孟修 職能治療師</p>
+    <div class="row"><button type="button" class="btn ghost small" id="resetBtn">清除我的作答，重新開始</button><span id="resetAsk"></span></div>
+  </footer>
+</main>
+<canvas id="cardCanvas" width="1080" height="1350" hidden></canvas>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+/* ───────── 教材內容 ───────── */
+const TF = [
+  {s:'坐著抬膝、伸膝，就是完整的功能性訓練。', a:false, fb:'它們是很好的肌力基礎，但還不等於「站起來」這整個動作。'},
+  {s:'單純做肌力訓練，肌力進步得比較多。', a:true, fb:'研究中肌力組的肌力進步較多。'},
+  {s:'練真實動作的人，日常生活做得更好，效果也維持較久。', a:true, fb:'功能組的日常活動表現進步較多，半年後還在。'},
+  {s:'跌倒大多發生在坐著的時候。', a:false, fb:'最常發生在走路、站著和坐下的時候。'},
+  {s:'想防跌，最好扶著穩固的椅背站著練。', a:true, fb:'站著練平衡，才練得到跌倒發生時的情境。'},
+  {s:'從馬桶、汽車站起來，和從椅子站起來是不同的能力。', a:false, fb:'都是「坐到站」，練好一個動作，生活中處處用得到。'},
+  {s:'撿地上的東西，應該膝蓋打直、只彎腰。', a:false, fb:'一手扶穩、屁股往後推、膝蓋彎，再伸手往下拿。'},
+  {s:'長照「復能」是在真實生活情境裡，練習想做回的事。', a:true, fb:'從你最想做回的事開始，家人也一起學。'},
+];
+
+const CH = [
+  {id:'ch1', tag:'開場', title:'坐著練，就是功能性訓練嗎？',
+   note:'播放前先問：「你平常都坐著做運動嗎？」播完請學員舉例：生活中哪些動作是站著做的？',
+   qs:[
+    {type:'choice', at:17, q:'下列哪一項，最接近「功能性訓練」？', opts:['坐著做伸膝','扶椅背練坐到站','躺著做抬腿','坐著握握力球'], ans:1,
+     fb:'功能性訓練是把動作練得像生活：站起來、走路、轉身、彎腰撿東西。'},
+    {type:'sort', at:25.5, q:'這些動作，比較偏向哪一類？', bins:[{id:'S',label:'肌力基礎'},{id:'F',label:'功能性動作'}],
+     items:[{x:'坐著伸膝',b:'S'},{x:'坐到站',b:'F'},{x:'坐著抬膝',b:'S'},{x:'彎腰撿東西',b:'F'},{x:'扶椅背原地踏步',b:'F'},{x:'坐著夾彈力球',b:'S'}],
+     fb:'坐著抬膝、伸膝練單一肌肉的力量，是很好的基礎；站起來、撿東西則是一整個生活動作。'},
+   ]},
+  {id:'ch2', tag:'研究', title:'功能性訓練，真的比較有效嗎？',
+   note:'強調「不是二選一」：肌力是底子，功能是轉換。可以請學員分享：力氣變大了，生活有沒有變輕鬆？',
+   qs:[
+    {type:'choice', at:4.9, q:'研究比較兩種練法，「練真實動作」那組的結果是？', opts:['肌力進步最多','日常生活做得更好','兩組完全一樣','半年後效果消失'], ans:1,
+     fb:'功能組的日常活動表現進步較多，半年後還維持；肌力組則是肌力進步較多。'},
+    {type:'choice', at:9.9, q:'以平衡和功能性動作為主的運動，大約可以減少多少跌倒？', opts:['約一成','約四分之一','約一半','約九成'], ans:1,
+     fb:'Cochrane 系統性回顧（2019）：約減少 24%；合併肌力訓練等多種運動，約減少 34%。'},
+    {type:'fill', at:15.5, q:'把這句話填完整', bank:['目標','轉換','底子','結果'], lines:[{pre:'肌力是',ans:'底子'},{pre:'功能是',ans:'轉換'}],
+     fb:'肌力是底子，功能是轉換：兩種都要，而且要練到生活動作裡。'},
+   ]},
+  {id:'ch3', tag:'重點一', title:'防跌，站著練',
+   note:'請學員起立，扶椅背一起做 5 次墊腳尖。提醒：椅子要穩、旁邊有人。',
+   qs:[
+    {type:'choice', at:3.3, q:'長照機構錄影研究中，跌倒最常發生在什麼時候？', opts:['躺在床上時','坐著吃飯時','走路的時候','睡覺翻身時'], ans:2,
+     fb:'走路 24%、站著 13%、坐下 12%。跌倒大多發生在站著動的時候，所以要站著練。'},
+    {type:'spot', at:7.9, q:'這樣練，可以嗎？', cards:[
+      {x:'扶穩固椅背墊腳尖', ok:true, why:'有扶手、有支撐，安全又能練到小腿和平衡。'},
+      {x:'扶著有輪子的椅子', ok:false, why:'有輪子會滑動，改扶穩固的椅背或流理台。'},
+      {x:'旁邊有人陪著練', ok:true, why:'剛開始練或平衡較差時，有人陪最安全。'},
+      {x:'閉眼單腳站自己練', ok:false, why:'難度太高又沒有保護，先扶穩、睜眼練。'},
+      {x:'扶椅背原地踏步', ok:true, why:'站著練重心轉移，接近走路時的需求。'},
+      {x:'頭暈了還繼續撐', ok:false, why:'頭暈要先停下來休息，常發生就要就醫。'},
+    ], fb:'站著練、扶穩、有人陪，安全第一。'},
+   ]},
+  {id:'ch4', tag:'重點二', title:'轉位，練坐到站',
+   note:'讓學員實際做一次：腳往後收、身體前傾、鼻子過腳尖，再站起來。',
+   qs:[
+    {type:'order', at:8.7, q:'坐到站的順序，請依序點選', items:['腳往後收','身體往前傾','鼻子超過腳尖','用力站起來'], shuf:[2,0,3,1],
+     fb:'腳往後收、身體往前傾，鼻子超過腳尖，再用力站起來。'},
+    {type:'choice', at:13.8, q:'坐到站還太難時，比較好的做法是？', opts:['改成只坐著練','墊高椅面、用扶手','請家人直接拉起','乾脆先不要練'], ans:1,
+     fb:'先降低難度：墊高椅面、用扶手；進步了再降低高度、放慢坐下。'},
+   ]},
+  {id:'ch5', tag:'重點三', title:'撿東西、拿鞋子',
+   note:'準備一個輕的物品，請學員扶椅背示範撿起；先放椅面，再放小板凳。',
+   qs:[
+    {type:'choice', at:5.9, q:'撿地上的東西，比較安全的方式是？', opts:['膝蓋打直只彎腰','一手扶穩，屁股後推','快速蹲下再站起','閉氣用力撿起來'], ans:1,
+     fb:'一手扶穩、屁股往後推、膝蓋彎、背打直，再伸手往下拿。'},
+    {type:'order', at:10.5, q:'撿東西的練習，從簡單到難排排看', items:['撿椅子上的東西','撿小板凳上的東西','撿地板上的東西'], shuf:[2,0,1],
+     fb:'先從高一點的地方開始，再慢慢往下，最後才到地板。'},
+   ]},
+  {id:'ch6', tag:'復能', title:'長照「復能」',
+   note:'請學員想一想：家裡長輩最想自己做回的一件事是什麼？',
+   qs:[
+    {type:'choice', at:4.1, q:'長照「復能」最重要的出發點是？', opts:['大家做同一套操','從最想做回的事開始','都交給治療師做','只在住院時才做'], ans:1,
+     fb:'從個人最想做回的事開始，在真實情境裡一步步練，家人也一起學會怎麼幫。'},
+    {type:'fill', at:14, q:'長照專線是幾號？', bank:['1922','165','1966','119'], lines:[{pre:'長照專線：',ans:'1966'}],
+     fb:'撥打 1966 長照專線申請，照顧管理專員會到府評估。'},
+   ]},
+  {id:'ch7', tag:'總結', title:'記住三句話',
+   note:'請每人選一個這週就能開始的練習，寫進下方的練習卡。',
+   qs:[
+    {type:'fill', at:1.7, q:'把三句話填完整', bank:['坐著','站著','休息','坐到站','訓練','躺著'], lines:[{pre:'防跌，',ans:'站著',post:'練'},{pre:'轉位，練',ans:'坐到站'},{pre:'撿東西，也是',ans:'訓練'}],
+     fb:'防跌站著練、轉位練坐到站、撿東西也是訓練。'},
+    {type:'choice', at:7.1, q:'國際防跌指引建議，平衡與功能性訓練至少要？', opts:['每週一次、一個月','每週三次、三個月以上','每天練兩個小時','想到的時候才練'], ans:1,
+     fb:'每週至少 3 次、持續 12 週以上，並且慢慢加難度。'},
+   ]},
+];
+
+const VOTE = [
+  {x:'扶椅背站著練', fb:'從墊腳尖、原地踏步開始，每天 1 輪。把它寫進下面的練習卡。'},
+  {x:'每天練坐到站', fb:'先做一次 30 秒坐站測試，記下起點，三個月後再測一次。'},
+  {x:'練撿東西、拿鞋子', fb:'先從撿椅子上的東西開始，一手扶穩，慢慢往下。'},
+];
+
+const FLIPS = [
+  ['什麼是功能性訓練？','把動作練得像生活：站起來、走路、轉身、彎腰撿東西。'],
+  ['坐著抬膝、伸膝算嗎？','是很好的肌力基礎，但還不等於「站起來」這整個動作。'],
+  ['功能性訓練比肌力訓練有效？','看目標：肌力訓練長肌力，功能性訓練讓生活做得更好。兩種都要。'],
+  ['為什麼防跌要站著練？','跌倒大多發生在走路、站著、坐下時；以平衡和功能性動作為主的運動，跌倒約少四分之一。'],
+  ['推薦哪些功能性訓練？','扶椅背墊腳尖、原地踏步、前後腳站；坐到站；撿東西、拿鞋子。'],
+  ['復能和功能性訓練的關係？','復能就是把功能性訓練帶進生活：從最想做回的事開始，在真實情境裡練。'],
+];
+
+const PLEDGES = [
+  {x:'坐到站 10 次', s:'每天 1–2 輪，慢慢坐下'},
+  {x:'扶椅背墊腳尖 10 下', s:'椅子要穩、旁邊有人'},
+  {x:'扶椅背原地踏步 30 秒', s:'練重心轉移'},
+  {x:'扶椅背前後腳站 30 秒', s:'兩腳輪流在前'},
+  {x:'撿東西練習', s:'從椅子上開始，再到小板凳'},
+  {x:'三個月後再測一次', s:'30 秒坐站測試'},
+  {x:'請家人陪我練', s:'安全，也比較持久'},
+  {x:'幫長輩問復能服務', s:'撥 1966 長照專線'},
+];
+
+// CDC STEADI 30 秒坐站測試：低於此次數＝低於同齡平均
+const NORMS = [[60, 14, 12], [65, 12, 11], [70, 12, 10], [75, 11, 10], [80, 10, 9], [85, 8, 8], [90, 7, 4]];
+function chairNorm(age, sex) {
+  if (!(age >= 60)) return null;
+  let row = NORMS[0];
+  for (const r of NORMS) if (age >= r[0]) row = r;
+  return sex === 'm' ? row[1] : row[2];
+}
+
+/* ───────── 狀態 ───────── */
+const KEY = 'functional-training-lesson-v1';
+const fresh = () => ({v:1, pre:{}, post:{}, q:{}, cur:0, watched:{}, vote:null, pledges:[], who:'', date:'', teacher:false, test:null});
+let S = (() => { try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && v.v === 1) return Object.assign(fresh(), v); } catch (e) {} return fresh(); })();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LET = 'ABCD';
+const TOTAL = CH.reduce((a, c) => a + c.qs.length, 0) + TF.length;
+const qst = id => S.q[id] || (S.q[id] = {});
+const allDone = obj => TF.every((_, i) => i in obj);
+const tfScore = obj => TF.filter((t, i) => obj[i] === t.a).length;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => { t.hidden = true; }, 2400); }
+
+function renderStars() {
+  let n = Object.values(S.q).filter(x => x.done && x.ok).length;
+  if (allDone(S.post)) n += tfScore(S.post);
+  $('#stars').textContent = `⭐ ${n} / ${TOTAL}`;
+  const watchedAll = CH.every(c => S.watched[c.id] || c.qs.every((_, i) => S.q[`${c.id}-${i}`]?.done));
+  const marks = {pre: allDone(S.pre), watch: watchedAll, post: allDone(S.post), act: S.pledges.length > 0 || !!S.test};
+  $$('.steps a').forEach(a => a.classList.toggle('done', !!marks[a.dataset.step]));
+}
+
+function renderTF(listId, obj, withFb) {
+  $(listId).innerHTML = TF.map((t, i) => {
+    const has = i in obj, mine = obj[i];
+    const cls = v => !has || !withFb ? '' : v === t.a ? 'right' : mine === v ? 'wrong' : '';
+    const lock = withFb && has ? 'disabled' : '';
+    const fb = withFb && has ? `<div class="tf-fb">${mine === t.a ? '<b>答對</b>' : '<b class="x">再想想</b>'}：${esc(t.fb)}</div>` : '';
+    const w = withFb ? 'post' : 'pre';
+    return `<div class="tf-item"><span class="n num">${i + 1}</span><span class="s">${esc(t.s)}</span>
+      <div class="tf-btns" role="group" aria-label="第 ${i + 1} 題">
+        <button type="button" data-act="tf" data-w="${w}" data-i="${i}" data-v="1" aria-pressed="${has && mine === true}" class="${cls(true)}" aria-label="對" ${lock}>⭕</button>
+        <button type="button" data-act="tf" data-w="${w}" data-i="${i}" data-v="0" aria-pressed="${has && mine === false}" class="${cls(false)}" aria-label="錯" ${lock}>❌</button>
+      </div>${fb}</div>`;
+  }).join('');
+}
+function renderPre() {
+  renderTF('#preList', S.pre, false);
+  $('#preDone').innerHTML = allDone(S.pre) ? `<div class="notice">課前作答完成，答案先保密！帶著下面 3 個看片任務，開始看影片吧。 <a href="#watch">開始看影片 ↓</a></div>` : '';
+}
+function renderPost() {
+  renderTF('#postList', S.post, true);
+  const g = $('#gain');
+  if (!allDone(S.post)) { g.innerHTML = ''; return; }
+  const post = tfScore(S.post), pre = allDone(S.pre) ? tfScore(S.pre) : null;
+  const bar = (k, label, v) => `<div class="bar ${k}"><span>${label}</span><div class="track"><div class="fill" style="width:${v / TF.length * 100}%"></div></div><span class="v">${v} / ${TF.length}</span></div>`;
+  let msg;
+  if (pre === null) msg = '你沒有做課前猜一猜，所以只看得到課後成績。';
+  else if (post > pre) msg = `比課前多答對 ${post - pre} 題，進步看得見！`;
+  else if (post === TF.length) msg = '課前課後都全對，你可以當大家的小老師！';
+  else msg = '答錯的題目，到影片那段按「回看這段」再看一次。';
+  g.innerHTML = `<div class="card gain"><h3 style="font-size:23px">學習成效</h3>${pre !== null ? bar('pre', '課前', pre) : ''}${bar('post', '課後', post)}<p class="verdict">${msg}</p><p><a href="#act">下一步：把知識變成行動 ↓</a></p></div>`;
+}
+function renderVote() {
+  $('#vote').innerHTML = VOTE.map((v, i) => `<button type="button" data-act="vote" data-i="${i}" aria-pressed="${S.vote === i}">${esc(v.x)}</button>`).join('');
+  $('#voteFb').innerHTML = S.vote === null ? '' : `<div class="notice">你選的是「${esc(VOTE[S.vote].x)}」。${esc(VOTE[S.vote].fb)}</div>`;
+}
+
+/* ───────── 影片與每段題目 ───────── */
+const vid = $('#vid');
+function loadChapter(i, play) {
+  S.cur = i; save();
+  const c = CH[i];
+  vid.poster = `video/${c.id}.jpg`; vid.src = `video/${c.id}.mp4`; vid.load();
+  if (play) vid.play().catch(() => {});
+  renderChaps(); renderQ();
+}
+function renderChaps() {
+  $('#chaps').innerHTML = CH.map((c, i) => {
+    const done = c.qs.every((_, k) => S.q[`${c.id}-${k}`]?.done);
+    return `<button type="button" data-act="chap" data-i="${i}" class="${i === S.cur ? 'on' : ''} ${done ? 'done' : ''}" aria-current="${i === S.cur}" aria-label="第 ${i + 1} 段 ${esc(c.tag)}${done ? '（已完成）' : ''}"><span>${i + 1}</span>${esc(c.tag)}</button>`;
+  }).join('');
+}
+function fbBlock(q, st) {
+  if (!st.done) return '';
+  return `<div class="fb ${st.ok ? 'good' : 'bad'}" role="status"><span class="h">${st.ok ? '答對了！⭐ +1' : '沒關係，重點在這裡'}</span><span>${esc(q.fb)}</span>
+    <div class="row"><button type="button" class="btn ghost small" data-act="seek" data-at="${q.at}">⟲ 回看這段</button></div></div>`;
+}
+function renderQuestion(c, q, k) {
+  const id = `${c.id}-${k}`, st = qst(id);
+  let body = '';
+  if (q.type === 'choice') {
+    body = `<div class="opts">${q.opts.map((o, i) => {
+      const cls = st.done ? (i === q.ans ? 'right' : i === st.pick ? 'wrong' : 'dim') : '';
+      return `<button type="button" class="opt ${cls}" data-act="choice" data-q="${id}" data-i="${i}" ${st.done ? 'disabled' : ''}><span class="lt">${LET[i]}</span><span>${esc(o)}</span></button>`;
+    }).join('')}</div>`;
+  } else if (q.type === 'sort') {
+    const p = st.picks || {};
+    body = q.items.map((it, j) => {
+      const has = j in p;
+      return `<div class="srow"><span class="x">${esc(it.x)}</span><div class="bins">${q.bins.map(b => {
+        const cls = has ? (p[j] === b.id ? (b.id === it.b ? 'pick-right' : 'pick-wrong') : (b.id === it.b ? 'was-right' : '')) : '';
+        return `<button type="button" class="${cls}" data-act="sort" data-q="${id}" data-j="${j}" data-b="${b.id}" ${has ? 'disabled' : ''}>${esc(b.label)}</button>`;
+      }).join('')}</div></div>`;
+    }).join('');
+  } else if (q.type === 'spot') {
+    const p = st.picks || {};
+    body = `<div class="spot">${q.cards.map((cd, j) => {
+      const has = j in p, right = has && p[j] === cd.ok;
+      const c1 = has && p[j] === true ? (cd.ok ? 'pick-right' : 'pick-wrong') : has && cd.ok ? 'was-right' : '';
+      const c0 = has && p[j] === false ? (!cd.ok ? 'pick-right' : 'pick-wrong') : has && !cd.ok ? 'was-right' : '';
+      return `<div class="sc ${has ? (right ? 'res-ok' : 'res-bad') : ''}"><span class="x">${esc(cd.x)}</span>
+        <div class="bins"><button type="button" data-act="spot" data-q="${id}" data-j="${j}" data-v="1" class="${c1}" ${has ? 'disabled' : ''}>👍 可以</button><button type="button" data-act="spot" data-q="${id}" data-j="${j}" data-v="0" class="${c0}" ${has ? 'disabled' : ''}>👎 不行</button></div>
+        ${has ? `<span class="why">${cd.ok ? '可以：' : '不建議：'}${esc(cd.why)}</span>` : ''}</div>`;
+    }).join('')}</div>`;
+  } else if (q.type === 'fill') {
+    const f = st.fill || q.lines.map(() => null);
+    body = `<div class="blanks">${q.lines.map((ln, j) => {
+      let cls = f[j] ? 'filled' : '';
+      if (st.done) cls += f[j] === ln.ans ? ' right' : ' wrong';
+      return `<div class="blank-line">${esc(ln.pre)}<button type="button" class="slot ${cls}" data-act="unfill" data-q="${id}" data-j="${j}" ${st.done ? 'disabled' : ''} aria-label="空格 ${j + 1}${f[j] ? '：' + esc(f[j]) : ''}">${f[j] ? esc(f[j]) : '？'}</button>${esc(ln.post || '')}${st.done && f[j] !== ln.ans ? `<span style="color:var(--good);font-weight:700">（${esc(ln.ans)}）</span>` : ''}</div>`;
+    }).join('')}</div>
+    <div class="bank">${q.bank.map(w => `<button type="button" data-act="fill" data-q="${id}" data-w="${esc(w)}" ${st.done || f.includes(w) ? 'disabled' : ''}>${esc(w)}</button>`).join('')}</div>
+    ${!st.done ? `<div class="row" style="margin-top:12px"><button type="button" class="btn small" data-act="checkfill" data-q="${id}" ${f.every(Boolean) ? '' : 'disabled'}>對答案</button></div>` : ''}`;
+  } else if (q.type === 'order') {
+    const seq = st.seq || [];
+    body = `<div class="olist">${q.shuf.map(j => {
+      const pos = seq.indexOf(j);
+      let cls = pos >= 0 ? 'picked' : '';
+      if (st.done) cls += pos === j ? ' right' : ' wrong';
+      return `<button type="button" class="oi ${cls}" data-act="order" data-q="${id}" data-j="${j}" ${st.done || pos >= 0 ? 'disabled' : ''}><span class="badge">${pos >= 0 ? pos + 1 : ''}</span><span>${esc(q.items[j])}</span></button>`;
+    }).join('')}</div>
+    ${!st.done && seq.length ? `<div class="row" style="margin-top:10px"><button type="button" class="btn ghost small" data-act="reorder" data-q="${id}">重新排</button></div>` : ''}
+    ${st.done && !st.ok ? `<p style="margin-top:10px;color:var(--muted)">正確順序：${q.items.map((x, i) => `${i + 1}. ${esc(x)}`).join('　')}</p>` : ''}`;
+  }
+  return `<div class="q" id="q-${id}"><div class="qt"><span class="qn">${k + 1}</span>${esc(q.q)}</div>${body}${fbBlock(q, st)}</div>`;
+}
+function renderQ() {
+  const i = S.cur, c = CH[i], last = i === CH.length - 1;
+  $('#qpanel').innerHTML = `
+    <div class="qhead"><span class="k">第 ${i + 1} 段／共 ${CH.length} 段・${esc(c.tag)}</span><h3>${esc(c.title)}</h3></div>
+    <label class="toggle"><input type="checkbox" data-act="teacher" ${S.teacher ? 'checked' : ''}> 顯示講師帶領提示</label>
+    ${S.teacher ? `<div class="teach"><b>講師提示</b>　${esc(c.note)}</div>` : ''}
+    ${S.watched[c.id] ? '<div class="ended">影片看完了，換你作答！</div>' : ''}
+    ${c.qs.map((q, k) => renderQuestion(c, q, k)).join('')}
+    <div class="qnav">
+      <button type="button" class="btn ghost" data-act="chap" data-i="${i - 1}" ${i === 0 ? 'disabled' : ''}>← 上一段</button>
+      ${last ? '<a class="btn" href="#post">前往課後再測 →</a>' : '<button type="button" class="btn" data-act="next">下一段影片 →</button>'}
+    </div>`;
+}
+const finish = () => { save(); renderQ(); renderChaps(); renderStars(); };
+vid.addEventListener('ended', () => {
+  S.watched[CH[S.cur].id] = true; save(); renderQ(); renderStars();
+  if (innerWidth <= 900) $('#qpanel').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
+});
+
+/* ───────── 30 秒坐站測試 ───────── */
+let timer = null, endAt = 0, reps = 0;
+let audioCtx = null;
+function beep(f = 880, d = .18) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = f; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(.18, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + d);
+    o.start(); o.stop(audioCtx.currentTime + d);
+  } catch (e) {}
+}
+function setRing(left) {
+  $('#secLeft').textContent = Math.ceil(left);
+  $('#ringArc').setAttribute('stroke-dashoffset', (326.7 * (1 - left / 30)).toFixed(1));
+}
+function showResult(n, source) {
+  const age = +$('#t-age').value, sex = $('#t-sex').value, norm = chairNorm(age, sex);
+  const box = $('#testRes');
+  S.test = {n, age, sex, date: new Date().toISOString().slice(0, 10)}; save(); renderTicket(); renderStars();
+  if (norm === null) { box.className = 'result na'; box.innerHTML = `<b>站起來 ${n} 次</b><br>這個參考值適用 60 歲以上。可以記下來，當成自己的起點，三個月後再測一次。`; return; }
+  if (n < norm) {
+    box.className = 'result low';
+    box.innerHTML = `<b>站起來 ${n} 次：低於同齡平均（${norm} 次）</b><br>跌倒風險可能較高。建議請職能或物理治療師評估，並從「扶椅背的坐到站」開始，每天練一點。`;
+  } else {
+    box.className = 'result ok';
+    box.innerHTML = `<b>站起來 ${n} 次：達到同齡平均（${norm} 次）</b><br>很好！繼續保持站著練，三個月後再測一次，看看有沒有進步。`;
+  }
+  if (source === 'timer') beep(660, .4);
+}
+function stopTimer() { clearInterval(timer); timer = null; $('#tapRep').disabled = true; $('#startT').disabled = false; }
+$('#startT').addEventListener('click', () => {
+  reps = 0; $('#reps').textContent = 0; $('#t-manual').value = '';
+  endAt = performance.now() + 30000; $('#tapRep').disabled = false; $('#startT').disabled = true;
+  beep(880, .25);
+  $('#testRes').className = 'result na'; $('#testRes').innerHTML = '<b>開始！</b><br>每站直一次，就按一下「＋1」。';
+  timer = setInterval(() => {
+    const left = Math.max(0, (endAt - performance.now()) / 1000);
+    setRing(left);
+    if (left <= 0) { stopTimer(); showResult(reps, 'timer'); }
+  }, 100);
+  $('#tapRep').focus();
+});
+$('#tapRep').addEventListener('click', () => { reps++; $('#reps').textContent = reps; beep(1200, .06); });
+$('#resetT').addEventListener('click', () => { stopTimer(); reps = 0; $('#reps').textContent = 0; setRing(30); $('#testRes').className = 'result na'; $('#testRes').innerHTML = '<b>測完會在這裡看到結果</b><br>和同年齡、同性別的參考值比較。'; });
+$('#t-manual').addEventListener('change', e => { const n = parseInt(e.target.value, 10); if (n >= 0 && n <= 60) { stopTimer(); $('#reps').textContent = n; showResult(n, 'manual'); } });
+
+/* ───────── 承諾牆與練習卡 ───────── */
+function renderPledges() {
+  $('#pledges').innerHTML = PLEDGES.map((p, i) => `<label><input type="checkbox" data-act="pledge" data-i="${i}" ${S.pledges.includes(i) ? 'checked' : ''}><span>${esc(p.x)}<small>${esc(p.s)}</small></span></label>`).join('');
+  renderTicket();
+}
+const cardLines = () => S.pledges.slice().sort((a, b) => a - b).map(i => PLEDGES[i].x);
+function fmtDate(d) { if (!d) return '今天'; const [y, m, dd] = d.split('-').map(Number); return `${y} 年 ${m} 月 ${dd} 日`; }
+function renderTicket() {
+  const lines = cardLines();
+  $('#ticket').innerHTML = `<h4>我的功能性練習卡</h4>
+    <div class="meta">從 ${esc(fmtDate(S.date))} 開始${S.who ? `｜為了 ${esc(S.who)}` : ''}${S.test ? `<br>我的起點：30 秒坐站 ${S.test.n} 次` : ''}</div>
+    ${lines.length ? `<ul>${lines.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="empty">在左邊勾選要做的練習，會出現在這裡。</p>'}
+    <div class="foot">防跌站著練・轉位練坐到站・撿東西也是訓練｜每週 ≥ 3 次、持續 ≥ 3 個月</div>`;
+}
+function cardText() {
+  const lines = cardLines();
+  return `【我的功能性練習卡】\n從 ${fmtDate(S.date)} 開始${S.who ? `，為了 ${S.who}` : ''}\n` + (S.test ? `我的起點：30 秒坐站 ${S.test.n} 次\n` : '') +
+    (lines.length ? lines.map(x => `☐ ${x}`).join('\n') : '☐ （還沒勾選練習）') +
+    `\n\n記住：防跌站著練、轉位練坐到站、撿東西也是訓練。每週至少 3 次、持續 3 個月以上。`;
+}
+function drawCard() {
+  const cv = $('#cardCanvas'), g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  const font = (w, s) => `${w} ${s}px "LXGW WenKai TC","Noto Sans TC","PingFang TC",sans-serif`;
+  g.fillStyle = '#F6EFE3'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#FBF3DF'; g.strokeStyle = '#2B231D'; g.lineWidth = 5; g.fillRect(60, 70, W - 120, H - 140); g.strokeRect(60, 70, W - 120, H - 140);
+  g.fillStyle = 'rgba(227,176,75,.7)'; g.fillRect(W / 2 - 80, 50, 160, 40);
+  g.fillStyle = '#2B231D'; g.font = font(700, 74); g.fillText('我的功能性練習卡', 120, 210);
+  g.fillStyle = '#6A5C4F'; g.font = font(500, 38);
+  let y = 290; g.fillText(`從 ${fmtDate(S.date)} 開始`, 120, y);
+  if (S.who) { y += 56; g.fillText(`為了 ${S.who}`, 120, y); }
+  if (S.test) { y += 56; g.fillText(`我的起點：30 秒坐站 ${S.test.n} 次`, 120, y); }
+  y += 110;
+  const lines = cardLines();
+  g.font = font(700, 50);
+  (lines.length ? lines : ['（還沒勾選練習）']).forEach(x => {
+    g.strokeStyle = '#B9442A'; g.lineWidth = 6; g.strokeRect(120, y - 40, 44, 44);
+    g.fillStyle = '#2B231D'; g.fillText(x, 196, y); y += 92;
+  });
+  g.fillStyle = '#2B231D'; g.font = font(700, 36); g.fillText('防跌站著練・轉位練坐到站・撿東西也是訓練', 120, H - 190);
+  g.fillStyle = '#6A5C4F'; g.font = font(500, 30); g.fillText('每週 ≥ 3 次、持續 ≥ 3 個月｜愛迪樂 鍾孟修 職能治療師', 120, H - 130);
+}
+let downloads = null;
+const inViewer = !!(window.claude && typeof window.claude.use === 'function');
+if (inViewer) window.claude.use('downloads').then(d => { downloads = d; $('#saveCard').hidden = !d; }).catch(() => {});
+else $('#saveCard').hidden = false;
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); toast('已複製'); }
+  catch (e) { const ta = $('#copyFallback'); ta.value = text; ta.classList.remove('sr'); ta.style.cssText = 'width:100%;height:160px;margin-top:10px'; ta.removeAttribute('aria-hidden'); ta.focus(); ta.select(); toast('請長按或按 Ctrl＋C 複製選取的文字'); }
+}
+
+/* ───────── 事件 ───────── */
+const findQ = id => { const [c, k] = id.split('-'); return CH.find(x => x.id === c).qs[+k]; };
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b || b.disabled) return;
+  const act = b.dataset.act, id = b.dataset.q;
+  if (act === 'tf') { const obj = b.dataset.w === 'pre' ? S.pre : S.post; obj[+b.dataset.i] = b.dataset.v === '1'; save(); b.dataset.w === 'pre' ? renderPre() : renderPost(); renderStars(); }
+  else if (act === 'vote') { S.vote = +b.dataset.i; save(); renderVote(); }
+  else if (act === 'chap') { loadChapter(+b.dataset.i, true); if (innerWidth <= 900) $('#watch').scrollIntoView({block: 'start'}); }
+  else if (act === 'next') { loadChapter(S.cur + 1, true); if (innerWidth <= 900) $('#watch').scrollIntoView({block: 'start'}); }
+  else if (act === 'seek') { vid.currentTime = +b.dataset.at; vid.play().catch(() => {}); if (innerWidth <= 900) $('.player').scrollIntoView({block: 'start'}); }
+  else if (act === 'choice') { const q = findQ(id), i = +b.dataset.i; S.q[id] = {done: true, pick: i, ok: i === q.ans}; finish(); }
+  else if (act === 'sort' || act === 'spot') {
+    const q = findQ(id), st = qst(id), j = +b.dataset.j;
+    st.picks = st.picks || {}; st.picks[j] = act === 'sort' ? b.dataset.b : b.dataset.v === '1';
+    const n = act === 'sort' ? q.items.length : q.cards.length;
+    if (Object.keys(st.picks).length === n) { st.done = true; st.ok = act === 'sort' ? q.items.every((it, k) => st.picks[k] === it.b) : q.cards.every((cd, k) => st.picks[k] === cd.ok); }
+    finish();
+  } else if (act === 'fill') { const q = findQ(id), st = qst(id); st.fill = st.fill || q.lines.map(() => null); const k = st.fill.indexOf(null); if (k >= 0) st.fill[k] = b.dataset.w; save(); renderQ(); }
+  else if (act === 'unfill') { const st = qst(id); if (st.fill) { st.fill[+b.dataset.j] = null; save(); renderQ(); } }
+  else if (act === 'checkfill') { const q = findQ(id), st = qst(id); st.done = true; st.ok = q.lines.every((ln, k) => st.fill[k] === ln.ans); finish(); }
+  else if (act === 'order') { const q = findQ(id), st = qst(id); st.seq = st.seq || []; st.seq.push(+b.dataset.j); if (st.seq.length === q.items.length) { st.done = true; st.ok = st.seq.every((v, k) => v === k); finish(); } else { save(); renderQ(); } }
+  else if (act === 'reorder') { qst(id).seq = []; save(); renderQ(); }
+  else if (act === 'copy') copyText(b.dataset.text);
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.act === 'teacher') { S.teacher = t.checked; save(); renderQ(); }
+  if (t.dataset.act === 'pledge') { const i = +t.dataset.i; S.pledges = t.checked ? [...new Set([...S.pledges, i])] : S.pledges.filter(x => x !== i); save(); renderTicket(); renderStars(); }
+});
+$('#f-date').addEventListener('input', e => { S.date = e.target.value; save(); renderTicket(); });
+$('#f-who').addEventListener('input', e => { S.who = e.target.value.trim(); save(); renderTicket(); });
+$('#copyCard').addEventListener('click', () => copyText(cardText()));
+$('#saveCard').addEventListener('click', async () => {
+  if (!downloads && inViewer) return;
+  try { await document.fonts.ready; } catch (e) {}
+  drawCard();
+  $('#cardCanvas').toBlob(async blob => {
+    if (!blob) { toast('圖片產生失敗，請改用「複製文字」'); return; }
+    if (!downloads) {
+      const url = URL.createObjectURL(blob), a = document.createElement('a');
+      a.href = url; a.download = '我的功能性練習卡.png'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000); toast('練習卡已下載'); return;
+    }
+    try { const r = await downloads.save({filename: '我的功能性練習卡.png', data: blob}); if (r.status === 'saved') toast('練習卡已儲存'); }
+    catch (err) { const code = err && err.code; if (code === 'declined') toast('已取消儲存'); else if (code === 'rate_limited') toast('請稍候再試一次'); else { $('#saveCard').hidden = true; toast('這裡無法儲存圖片，請改用「複製文字」'); } }
+  }, 'image/png');
+});
+$('#resetBtn').addEventListener('click', () => {
+  $('#resetAsk').innerHTML = '<button type="button" class="btn small" id="resetYes">確定清除</button> <button type="button" class="btn ghost small" id="resetNo">取消</button>';
+  $('#resetYes').onclick = () => { S = fresh(); save(); $('#f-date').value = ''; $('#f-who').value = ''; $('#resetAsk').innerHTML = ''; renderAll(); loadChapter(0, false); toast('已清除，可以重新開始'); };
+  $('#resetNo').onclick = () => { $('#resetAsk').innerHTML = ''; };
+});
+function renderAll() {
+  renderPre(); renderPost(); renderVote();
+  $('#flips').innerHTML = FLIPS.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('');
+  renderPledges(); renderStars();
+  if (S.test) { $('#t-age').value = S.test.age; $('#t-sex').value = S.test.sex; $('#reps').textContent = S.test.n; showResult(S.test.n, 'restore'); }
+}
+$('#f-date').value = S.date; $('#f-who').value = S.who;
+renderAll();
+loadChapter(Math.min(S.cur || 0, CH.length - 1), false);
+</script>
+</body></html>

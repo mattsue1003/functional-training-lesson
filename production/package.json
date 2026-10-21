@@ -1,0 +1,7 @@
+{
+  "name": "functional-training-video",
+  "private": true,
+  "dependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}

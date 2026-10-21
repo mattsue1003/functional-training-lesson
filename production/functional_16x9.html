@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>功能性訓練 16:9</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@700;900&display=swap">
+<style>
+html,body{margin:0;height:100%;background:#1b1612;overflow:hidden}
+#stage{width:1920px;height:1080px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);transform-origin:center;overflow:hidden;background:#A88D70}
+#sv{position:absolute;inset:0;width:1920px;height:1080px}
+#sub{position:absolute;left:140px;right:140px;bottom:44px;display:flex;justify-content:center;pointer-events:none}
+#sub span{font:900 50px/1.42 "Noto Sans TC","PingFang TC",sans-serif;color:#fff;text-align:center;letter-spacing:1px;
+  text-shadow:0 0 2px #120d0a,3px 3px 0 #120d0a,-3px -3px 0 #120d0a,3px -3px 0 #120d0a,-3px 3px 0 #120d0a,0 3px 0 #120d0a,0 -3px 0 #120d0a,3px 0 0 #120d0a,-3px 0 0 #120d0a,0 6px 14px rgba(0,0,0,.45)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="sv" viewBox="0 0 1920 1080">
+    <defs>
+      <filter id="boil" x="-2%" y="-2%" width="104%" height="104%">
+        <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="1" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="-26" dy="-8" stdDeviation="5" flood-color="#33261b" flood-opacity="0.32"/>
+      </filter>
+      <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="-14" dy="-4" stdDeviation="4" flood-color="#33261b" flood-opacity="0.28"/>
+      </filter>
+      <radialGradient id="glow"><stop offset="0" stop-color="#FFF4C2" stop-opacity=".95"/><stop offset="1" stop-color="#FFF4C2" stop-opacity="0"/></radialGradient>
+    </defs>
+    <image id="bg" x="0" y="0" width="1920" height="1080" preserveAspectRatio="none"/>
+    <g id="world" filter="url(#boil)"></g>
+  </svg>
+  <div id="sub"><span></span></div>
+</div>
+<script src="timing.js"></script>
+<script>
+/* ───────── 工具 ───────── */
+const NS = 'http://www.w3.org/2000/svg', INK = '#2B231D', FLOOR = 880;
+const HAND = '"LXGW WenKai TC","Kaiti TC","STKaiti",serif';
+const TIMING = window.TIMING, SUBS = window.SUBS, TOTAL = TIMING[TIMING.length - 1].end;
+const byId = Object.fromEntries(TIMING.map(t => [t.id, t]));
+function E(tag, a = {}, p) { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, p) => a + (b - a) * p;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const out3 = p => 1 - Math.pow(1 - p, 3);
+const inout = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+const sine = p => 0.5 - 0.5 * Math.cos(Math.PI * p);
+const back = p => { const c = 1.7, d = p - 1; return 1 + (c + 1) * d * d * d + c * d * d; };
+const rnd = (() => { let s = 7; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; })();
+function shade(hex, k) {
+  const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k));
+  return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
+/* ───────── 牆面質感（像參考影片那種刮痕牆） ───────── */
+function makeWall() {
+  const c = document.createElement('canvas'); c.width = 1920; c.height = 1080; const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, 1080); gr.addColorStop(0, '#BCA284'); gr.addColorStop(.75, '#AE9373'); gr.addColorStop(1, '#9A8064');
+  g.fillStyle = gr; g.fillRect(0, 0, 1920, 1080);
+  for (let i = 0; i < 700; i++) {
+    const x = rnd() * 1920, y = rnd() * 1080, r = 30 + rnd() * 170, dark = rnd() < .55;
+    const rg = g.createRadialGradient(x, y, 0, x, y, r);
+    rg.addColorStop(0, dark ? 'rgba(70,48,30,.07)' : 'rgba(240,225,200,.07)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = rg; g.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  for (let i = 0; i < 7000; i++) {
+    const x = rnd() * 1920, y = rnd() * 1080, l = 4 + rnd() * 46, a = (rnd() - .5) * .9 + (rnd() < .3 ? 1.4 : 0);
+    g.strokeStyle = rnd() < .6 ? `rgba(60,40,24,${.04 + rnd() * .09})` : `rgba(255,245,225,${.04 + rnd() * .08})`;
+    g.lineWidth = .6 + rnd() * 1.4; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
+  }
+  // 地板
+  const fg = g.createLinearGradient(0, FLOOR, 0, 1080); fg.addColorStop(0, 'rgba(70,50,34,.30)'); fg.addColorStop(1, 'rgba(50,34,22,.48)');
+  g.fillStyle = fg; g.fillRect(0, FLOOR, 1920, 1080 - FLOOR);
+  g.strokeStyle = 'rgba(45,30,20,.55)'; g.lineWidth = 3; g.beginPath();
+  for (let x = 0; x <= 1920; x += 20) g.lineTo(x, FLOOR + Math.sin(x * .013) * 2 + (rnd() - .5) * 1.5); g.stroke();
+  const vg = g.createRadialGradient(960, 520, 300, 960, 540, 1150); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(40,24,12,.42)');
+  g.fillStyle = vg; g.fillRect(0, 0, 1920, 1080);
+  document.getElementById('bg').setAttribute('href', c.toDataURL('image/jpeg', .92));
+}
+
+/* ───────── 出場動畫登記 ───────── */
+const ITEMS = [], CUES = [];
+// R：一個會在 t0 出現、t1 消失的元素群組（位置 x,y；kind: pop/up/fade/drop/left/right/write）
+function R(parent, x, y, t0, t1 = 1e9, kind = 'pop', sfx = 'pop', rot = 0) {
+  const outer = E('g', {transform: `translate(${x} ${y}) rotate(${rot})`}, parent);
+  const g = E('g', {opacity: 0}, outer);
+  ITEMS.push({g, t0, t1, kind});
+  if (sfx) CUES.push({t: t0, type: sfx});
+  return g;
+}
+function updItem(it, t) {
+  const p = clamp((t - it.t0) / .45), q = clamp((it.t1 - t) / .35);
+  const o = Math.min(it.kind === 'pop' ? clamp(p * 3) : out3(p), q);
+  let tr = '';
+  if (it.kind === 'pop') tr = `scale(${p <= 0 ? .3 : .3 + .7 * back(p)})`;
+  else if (it.kind === 'up') tr = `translate(0 ${(1 - out3(p)) * 40})`;
+  else if (it.kind === 'drop') tr = `translate(0 ${(1 - out3(p)) * -60})`;
+  else if (it.kind === 'left') tr = `translate(${(1 - out3(p)) * -120} 0)`;
+  else if (it.kind === 'right') tr = `translate(${(1 - out3(p)) * 120} 0)`;
+  it.g.setAttribute('opacity', o.toFixed(3));
+  it.g.setAttribute('transform', tr);
+}
+// 手寫字
+function HW(p, x, y, text, size = 56, fill = INK, anchor = 'start', w = 700) {
+  const e = E('text', {x, y, 'font-family': HAND, 'font-size': size, 'font-weight': w, fill, 'text-anchor': anchor, 'dominant-baseline': 'middle'}, p);
+  e.textContent = text; return e;
+}
+function brush(p, x1, y, x2, col = '#C9573A', w = 10) {
+  let d = `M${x1},${y}`; for (let x = x1; x <= x2; x += 30) d += ` L${x},${y + Math.sin(x * .07) * 3}`;
+  return E('path', {d, fill: 'none', stroke: col, 'stroke-width': w, 'stroke-linecap': 'round', opacity: .85}, p);
+}
+function paper(p, w, h, title, lines = [], o = {}) {
+  E('rect', {x: -w / 2, y: -h / 2, width: w, height: h, rx: 10, fill: o.fill || '#F3E8CF', stroke: INK, 'stroke-width': 4}, p);
+  E('rect', {x: -60, y: -h / 2 - 16, width: 120, height: 32, fill: 'rgba(235,220,170,.85)', stroke: 'rgba(43,35,29,.35)', 'stroke-width': 2, transform: 'rotate(-3)'}, p);
+  if (title) HW(p, 0, -h / 2 + 56, title, o.ts || 52, o.tc || INK, 'middle');
+  lines.forEach((l, i) => HW(p, 0, -h / 2 + (o.ly || 140) + i * (o.lh || 64), l[0], l[1] || 44, l[2] || INK, 'middle'));
+}
+
+/* ───────── 角色：側面、可做坐站撿物的 IK 人偶 ───────── */
+function ik2(ax, ay, tx, ty, l1, l2, side) {
+  const dx = tx - ax, dy = ty - ay;
+  const d = clamp(Math.hypot(dx, dy) || .01, Math.abs(l1 - l2) + .01, l1 + l2 - .01);
+  const ang = Math.atan2(dy, dx), a = Math.acos(clamp((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d), -1, 1));
+  const ja = ang + side * a;
+  return [ax + l1 * Math.cos(ja), ay + l1 * Math.sin(ja), ax + d * Math.cos(ang), ay + d * Math.sin(ang)];
+}
+const KINDS = {
+  bear: {L1: 116, L2: 110, AH: 16, TR: 160, legW: 50, UA: 90, FA: 84, armW: 32, shX: 6},
+  fox: {L1: 110, L2: 114, AH: 16, TR: 146, legW: 32, UA: 86, FA: 82, armW: 22, shX: 4},
+};
+class Critter {
+  constructor(parent, o = {}) {
+    this.o = Object.assign({kind: 'bear', s: 1, face: 1, fur: '#E3A04B', fur2: '#F5D296', shirt: '#33375C', pants: '#8C7A5C', shoe: '#3A2C24', glasses: false, brows: false, badge: false, hold: null}, o);
+    const k = this.k = KINDS[this.o.kind], o2 = this.o;
+    this.g = E('g', {filter: 'url(#shadow)'}, parent);
+    const g = this.g;
+    const limb = (w, col) => {
+      const grp = E('g', {}, g);
+      return {grp, a: E('path', {fill: 'none', stroke: INK, 'stroke-width': w + 8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'}, grp),
+        b: E('path', {fill: 'none', stroke: col, 'stroke-width': w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'}, grp)};
+    };
+    const shoe = () => { const s = E('g', {}, g); E('path', {d: `M-16,-8 C-18,8 -12,${k.AH} 0,${k.AH} L46,${k.AH} C60,${k.AH} 62,2 46,-4 C30,-10 6,-14 -16,-8 Z`, fill: o2.shoe, stroke: INK, 'stroke-width': 4}, s); return s; };
+    const hand = (col) => { const h = E('g', {}, g); E('circle', {r: k.armW * .62, fill: col, stroke: INK, 'stroke-width': 4}, h); return h; };
+    // 後側手、腳（較暗）
+    this.armB = limb(k.armW, shade(o2.fur, -.15)); this.slvB = limb(k.armW + 8, shade(o2.shirt, -.2)); this.handB = hand(shade(o2.fur, -.15));
+    this.legB = limb(k.legW, shade(o2.pants, -.18)); this.shoeB = shoe();
+    if (this.o.kind === 'fox') {
+      this.tail = E('g', {}, g);
+      E('path', {d: 'M-34,-26 C-92,-36 -134,4 -124,54 C-114,86 -70,66 -60,34 C-54,12 -44,-8 -34,-26 Z', fill: o2.fur, stroke: INK, 'stroke-width': 4}, this.tail);
+      E('path', {d: 'M-124,54 C-118,80 -86,78 -76,58 C-92,64 -112,62 -124,54 Z', fill: '#FFF8EC', stroke: INK, 'stroke-width': 3}, this.tail);
+    }
+    // 軀幹＋頭
+    this.trunkG = E('g', {}, g);
+    const T = this.trunkG;
+    if (o2.kind === 'bear') {
+      E('path', {d: 'M-58,14 C-76,-52 -70,-118 -42,-158 C-20,-170 22,-170 40,-156 C76,-118 92,-52 74,6 C62,26 -44,30 -58,14 Z', fill: o2.shirt, stroke: INK, 'stroke-width': 4.5}, T);
+      E('path', {d: 'M-60,2 C-40,20 58,20 76,-4 L77,14 C60,32 -48,34 -60,18 Z', fill: o2.pants, stroke: INK, 'stroke-width': 4}, T);
+      E('path', {d: 'M8,-158 C18,-140 30,-134 44,-140', fill: 'none', stroke: INK, 'stroke-width': 3.5}, T);
+    } else {
+      E('path', {d: 'M-40,12 C-50,-46 -46,-104 -26,-142 C-12,-152 16,-152 28,-140 C48,-104 54,-46 46,6 C36,22 -30,24 -40,12 Z', fill: o2.shirt, stroke: INK, 'stroke-width': 4.5}, T);
+      E('path', {d: 'M-41,2 C-24,16 30,16 47,-2 L48,12 C34,26 -30,28 -41,16 Z', fill: o2.pants, stroke: INK, 'stroke-width': 4}, T);
+      if (o2.badge) {
+        E('path', {d: 'M2,-146 L22,-96 M14,-146 L24,-96', stroke: '#028090', 'stroke-width': 4, fill: 'none'}, T);
+        E('rect', {x: 12, y: -100, width: 26, height: 32, rx: 4, fill: '#FFFFFF', stroke: INK, 'stroke-width': 3}, T);
+        E('rect', {x: 16, y: -94, width: 18, height: 6, fill: '#028090'}, T);
+      }
+    }
+    this.headG = E('g', {}, T);
+    const H = this.headG;
+    if (o2.kind === 'bear') {
+      for (const [x, y, r] of [[-34, -108, 20], [20, -114, 18]]) { E('circle', {cx: x, cy: y, r, fill: o2.fur, stroke: INK, 'stroke-width': 4}, H); E('circle', {cx: x, cy: y, r: r * .45, fill: shade(o2.fur, -.25)}, H); }
+      E('ellipse', {cx: 6, cy: -58, rx: 64, ry: 60, fill: o2.fur, stroke: INK, 'stroke-width': 4.5}, H);
+      E('ellipse', {cx: 54, cy: -44, rx: 32, ry: 24, fill: o2.fur2, stroke: INK, 'stroke-width': 4}, H);
+      E('ellipse', {cx: 82, cy: -52, rx: 10, ry: 8, fill: INK}, H);
+      this.eye = E('ellipse', {cx: 34, cy: -74, rx: 5, ry: 7, fill: INK}, H);
+      if (o2.brows) { E('path', {d: 'M20,-94 q13,-10 28,-3', stroke: INK, 'stroke-width': 12, 'stroke-linecap': 'round', fill: 'none'}, H); E('path', {d: 'M20,-94 q13,-10 28,-3', stroke: '#F6F1E6', 'stroke-width': 7, 'stroke-linecap': 'round', fill: 'none'}, H); }
+      if (o2.glasses) { E('circle', {cx: 36, cy: -72, r: 15, fill: 'rgba(255,255,255,.18)', stroke: INK, 'stroke-width': 3.5}, H); E('path', {d: 'M21,-74 L-4,-80', stroke: INK, 'stroke-width': 3.5}, H); }
+      if (o2.bow) { E('path', {d: 'M-30,-118 l-20,-16 l0,30 z M-30,-118 l20,-16 l0,30 z', fill: o2.bow, stroke: INK, 'stroke-width': 3}, H); }
+      this.mouth = E('path', {d: 'M58,-26 q9,6 18,-2', stroke: INK, 'stroke-width': 3.5, fill: 'none', 'stroke-linecap': 'round'}, H);
+    } else {
+      E('path', {d: 'M-30,-62 L-24,-120 L2,-78 Z', fill: o2.fur, stroke: INK, 'stroke-width': 4, 'stroke-linejoin': 'round'}, H);
+      E('path', {d: 'M-6,-70 L8,-126 L26,-76 Z', fill: o2.fur, stroke: INK, 'stroke-width': 4, 'stroke-linejoin': 'round'}, H);
+      E('path', {d: 'M-1,-76 L7,-110 L17,-78 Z', fill: '#FBEFE0'}, H);
+      E('ellipse', {cx: 4, cy: -44, rx: 44, ry: 42, fill: o2.fur, stroke: INK, 'stroke-width': 4.5}, H);
+      E('path', {d: 'M20,-64 C50,-58 78,-46 92,-40 C78,-30 50,-22 20,-20 Z', fill: o2.fur, stroke: INK, 'stroke-width': 4, 'stroke-linejoin': 'round'}, H);
+      E('path', {d: 'M24,-34 C48,-32 70,-34 90,-38 C76,-26 50,-20 24,-22 Z', fill: '#FFF8EC', stroke: INK, 'stroke-width': 3}, H);
+      E('path', {d: 'M-12,-30 C2,-10 24,-12 30,-24 C18,-22 2,-24 -12,-30 Z', fill: '#FFF8EC', stroke: INK, 'stroke-width': 3}, H);
+      E('circle', {cx: 92, cy: -40, r: 6.5, fill: INK}, H);
+      this.eye = E('ellipse', {cx: 30, cy: -58, rx: 4.5, ry: 6.5, fill: INK}, H);
+      this.mouth = E('path', {d: 'M60,-28 q8,4 16,0', stroke: INK, 'stroke-width': 3, fill: 'none', 'stroke-linecap': 'round'}, H);
+    }
+    // 前側腳、手
+    this.legF = limb(k.legW, o2.pants); this.shoeF = shoe();
+    this.armF = limb(k.armW, o2.fur); this.slvF = limb(k.armW + 8, o2.shirt); this.handF = hand(o2.fur);
+    this.prop = E('g', {}, g);   // 手上拿的東西（鑰匙等）
+  }
+  // P: {x,y 髖關節世界座標, trunk 前傾角, head, feet:[[x,y],[x,y]] 腳踝世界座標, heel:[角度,角度], hands:[[x,y]|null,…], o, face, mood}
+  pose(P) {
+    const k = this.k, s = this.o.s, face = P.face ?? this.o.face;
+    this.g.setAttribute('transform', `translate(${P.x.toFixed(1)} ${P.y.toFixed(1)}) scale(${(face * s).toFixed(4)} ${s.toFixed(4)})`);
+    this.g.setAttribute('opacity', (P.o ?? 1).toFixed(3));
+    const L = w => [(w[0] - P.x) * face / s, (w[1] - P.y) / s];
+    const tr = P.trunk || 0, th = tr * Math.PI / 180;
+    this.trunkG.setAttribute('transform', `rotate(${tr.toFixed(2)})`);
+    this.headG.setAttribute('transform', `translate(${k.shX + 8} ${-k.TR + 4}) rotate(${(P.head || 0).toFixed(2)})`);
+    if (this.tail) this.tail.setAttribute('transform', `rotate(${(P.tail || 0).toFixed(2)} -34 -26)`);
+    const shx = k.shX * Math.cos(th) + (k.TR - 16) * Math.sin(th), shy = k.shX * Math.sin(th) - (k.TR - 16) * Math.cos(th);
+    const legs = [[this.legF, this.shoeF], [this.legB, this.shoeB]];
+    legs.forEach(([leg, sh], i) => {
+      const [ax, ay] = L(P.feet[i]);
+      const [kx, ky, ex, ey] = ik2(0, 0, ax, ay, k.L1, k.L2, -1);
+      const d = `M0,0 L${kx.toFixed(1)},${ky.toFixed(1)} L${ex.toFixed(1)},${ey.toFixed(1)}`;
+      leg.a.setAttribute('d', d); leg.b.setAttribute('d', d);
+      const hl = (P.heel && P.heel[i]) || 0, fa = (P.footAng && P.footAng[i]) || 0;
+      sh.setAttribute('transform', `translate(${ex.toFixed(1)} ${ey.toFixed(1)}) rotate(${(hl + fa).toFixed(2)})`);
+    });
+    const arms = [[this.armF, this.slvF, this.handF], [this.armB, this.slvB, this.handB]];
+    arms.forEach(([arm, slv, hd], i) => {
+      const off = i ? -8 : 0;
+      const tg = P.hands && P.hands[i] ? L(P.hands[i]) : [shx + 12 + off, shy + k.UA + k.FA - 16];
+      const [ex, ey, hx, hy] = ik2(shx + off, shy, tg[0], tg[1], k.UA, k.FA, 1);
+      const d = `M${(shx + off).toFixed(1)},${shy.toFixed(1)} L${ex.toFixed(1)},${ey.toFixed(1)} L${hx.toFixed(1)},${hy.toFixed(1)}`;
+      arm.a.setAttribute('d', d); arm.b.setAttribute('d', d);
+      const mx = lerp(shx + off, ex, .5), my = lerp(shy, ey, .5);
+      const sd = `M${(shx + off).toFixed(1)},${shy.toFixed(1)} L${mx.toFixed(1)},${my.toFixed(1)}`;
+      slv.a.setAttribute('d', sd); slv.b.setAttribute('d', sd);
+      hd.setAttribute('transform', `translate(${hx.toFixed(1)} ${hy.toFixed(1)})`);
+      if (i === 0) this.prop.setAttribute('transform', `translate(${hx.toFixed(1)} ${hy.toFixed(1)})`);
+    });
+    const bl = P.blink ? .15 : 1;
+    this.eye.setAttribute('transform', `translate(0 ${this.o.kind === 'bear' ? -74 : -58}) scale(1 ${bl}) translate(0 ${this.o.kind === 'bear' ? 74 : 58})`);
+    if (P.mood === 'sad') this.mouth.setAttribute('d', this.o.kind === 'bear' ? 'M58,-22 q9,-6 18,2' : 'M60,-26 q8,-4 16,2');
+    else this.mouth.setAttribute('d', this.o.kind === 'bear' ? 'M58,-26 q9,6 18,-2' : 'M60,-28 q8,4 16,0');
+  }
+  // 常用尺寸（世界座標）
+  get standY() { const k = this.k; return FLOOR - (k.L1 + k.L2 - 3 + k.AH) * this.o.s; }
+  get ankleY() { return FLOOR - this.k.AH * this.o.s; }
+  seatY() { return FLOOR - (this.k.L2 + this.k.AH + 4) * this.o.s; }
+}
+const blinkAt = t => (t % 3.7) < .12;
+
+// 姿勢產生器（面向右）
+function standP(c, x, extra = {}) {
+  const s = c.o.s;
+  return Object.assign({x, y: c.standY, trunk: 0, feet: [[x + 8 * s, c.ankleY], [x - 4 * s, c.ankleY]]}, extra);
+}
+function sitP(c, sx, sy, extra = {}) {
+  const s = c.o.s, k = c.k, hy = sy - 6 * s;
+  const fx = sx + (k.L1 + 4) * s;
+  return Object.assign({x: sx, y: hy, trunk: -3, feet: [[fx, c.ankleY], [fx - 10 * s, c.ankleY]],
+    hands: [[sx + (k.L1 * .7) * s, hy - 14 * s], [sx + (k.L1 * .6) * s, hy - 16 * s]]}, extra);
+}
+// 坐到站 p: 0 坐 → 1 站
+function sts(c, sx, sy, p, extra = {}) {
+  const s = c.o.s, k = c.k, hy = sy - 6 * s;
+  const f0 = sx + (k.L1 + 4) * s, f1 = sx + (k.L1 - 30) * s;
+  const pa = inout(seg(p, 0, .2)), pb = inout(seg(p, .2, .45)), pc = seg(p, .45, .88), pd = inout(seg(p, .85, 1));
+  const fx = lerp(f0, f1, pa);
+  const x = lerp(sx, f1 - 6 * s, out3(pc)), y = lerp(hy, c.standY, inout(pc));
+  const trunk = lerp(lerp(-3, 40, pb), 4, inout(pc)) * (1 - pd) + 0 * pd;
+  const hs = 1 - inout(seg(p, .55, .9));
+  const hands = hs > 0.02 ? [[lerp(x + 40 * s, x + (k.L1 * .7) * s, hs), lerp(y + 60 * s, y - 14 * s, hs)], [lerp(x + 34 * s, x + (k.L1 * .6) * s, hs), lerp(y + 60 * s, y - 16 * s, hs)]] : null;
+  return Object.assign({x, y, trunk, feet: [[fx, c.ankleY], [fx - 10 * s, c.ankleY]], hands}, extra);
+}
+// 走路：hip 從 x0 走到 x1
+function walkP(c, x0, x1, t, t0, t1, extra = {}) {
+  const s = c.o.s, p = seg(t, t0, t1), x = lerp(x0, x1, sine(p)), dist = Math.abs(x - x0);
+  const stride = 64 * s, ph = (dist / stride) * .5;
+  const dir = Math.sign(x1 - x0) || 1, moving = p > 0 && p < 1;
+  const foot = q => {
+    q = ((q % 1) + 1) % 1;
+    if (!moving) return [0, 0];
+    if (q < .5) return [stride / 2 - stride * (q / .5), 0];
+    const r = (q - .5) / .5; return [-stride / 2 + stride * r, -Math.sin(Math.PI * r) * 24 * s];
+  };
+  const a = foot(ph), b = foot(ph + .5);
+  const face = extra.face ?? dir;
+  return Object.assign({x, y: c.standY - (moving ? Math.abs(Math.sin(ph * Math.PI * 2)) * 5 : 0), trunk: moving ? 4 : 0, face,
+    feet: [[x + a[0] * face + 6 * s * face, c.ankleY + a[1]], [x + b[0] * face - 4 * s * face, c.ankleY + b[1]]],
+    hands: [[x + (14 + b[0] * .5) * s * face, c.standY - 40 * s], [x + (6 + a[0] * .5) * s * face, c.standY - 40 * s]]}, extra);
+}
+
+/* ───────── 道具 ───────── */
+function chair(p, sx, seatY, o = {}) {
+  const g = E('g', {filter: 'url(#soft)'}, p), W = '#A9784C', D = shade(W, -.2);
+  const bx = sx - 92, fx = sx + 82, top = seatY - (o.backH || 230);
+  E('path', {d: `M${bx},${FLOOR} L${bx + 4},${seatY} M${fx},${FLOOR} L${fx},${seatY}`, stroke: INK, 'stroke-width': 18, 'stroke-linecap': 'round'}, g);
+  E('path', {d: `M${bx},${FLOOR} L${bx + 4},${seatY} M${fx},${FLOOR} L${fx},${seatY}`, stroke: D, 'stroke-width': 10, 'stroke-linecap': 'round'}, g);
+  E('path', {d: `M${bx + 4},${seatY} L${bx - 8},${top}`, stroke: INK, 'stroke-width': 22, 'stroke-linecap': 'round'}, g);
+  E('path', {d: `M${bx + 4},${seatY} L${bx - 8},${top}`, stroke: W, 'stroke-width': 14, 'stroke-linecap': 'round'}, g);
+  E('rect', {x: bx - 18, y: top - 4, width: 30, height: 70, rx: 8, fill: W, stroke: INK, 'stroke-width': 4, transform: `rotate(-3 ${bx} ${top})`}, g);
+  E('rect', {x: bx - 6, y: seatY - 4, width: fx - bx + 24, height: 22, rx: 8, fill: W, stroke: INK, 'stroke-width': 4}, g);
+  if (o.arm) {
+    E('path', {d: `M${bx + 2},${seatY - 92} L${fx + 6},${seatY - 92} M${fx - 4},${seatY - 92} L${fx - 4},${seatY}`, stroke: INK, 'stroke-width': 20, 'stroke-linecap': 'round'}, g);
+    E('path', {d: `M${bx + 2},${seatY - 92} L${fx + 6},${seatY - 92} M${fx - 4},${seatY - 92} L${fx - 4},${seatY}`, stroke: W, 'stroke-width': 12, 'stroke-linecap': 'round'}, g);
+  }
+  return {g, backTop: [bx - 4, top + 12], armTop: [fx - 10, seatY - 92]};
+}
+function cloud(p, x, y) {
+  const g = E('g', {transform: `translate(${x} ${y})`}, p);
+  const drops = E('g', {}, g);
+  for (let i = 0; i < 6; i++) E('path', {d: `M${-46 + i * 18},16 l-3,26`, stroke: '#5E7091', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-dasharray': '10 22'}, drops);
+  E('path', {d: 'M-62,10 C-80,8 -82,-20 -60,-24 C-60,-50 -24,-58 -10,-40 C2,-62 44,-58 46,-30 C72,-32 78,4 54,10 Z', fill: '#4E5B79', stroke: INK, 'stroke-width': 4}, g);
+  return {g, drops};
+}
+function bulb(p, x, y, len = 160) {
+  const g = E('g', {}, p);
+  E('path', {d: `M${x},${y - len} L${x},${y - 22}`, stroke: INK, 'stroke-width': 3}, g);
+  const glow = E('circle', {cx: x, cy: y + 10, r: 90, fill: 'url(#glow)', opacity: 0}, g);
+  E('rect', {x: x - 10, y: y - 24, width: 20, height: 16, fill: '#7A7266', stroke: INK, 'stroke-width': 3}, g);
+  const glass = E('path', {d: `M${x - 10},${y - 8} C${x - 30},${y + 6} ${x - 26},${y + 40} ${x},${y + 42} C${x + 26},${y + 40} ${x + 30},${y + 6} ${x + 10},${y - 8} Z`, fill: '#E9E2CF', stroke: INK, 'stroke-width': 3.5}, g);
+  return {g, glow, glass};
+}
+function stool(p, x, h = 74) {
+  const g = E('g', {filter: 'url(#soft)'}, p), W = '#B5844F';
+  E('path', {d: `M${x - 40},${FLOOR} L${x - 30},${FLOOR - h} M${x + 40},${FLOOR} L${x + 30},${FLOOR - h}`, stroke: INK, 'stroke-width': 14, 'stroke-linecap': 'round'}, g);
+  E('path', {d: `M${x - 40},${FLOOR} L${x - 30},${FLOOR - h} M${x + 40},${FLOOR} L${x + 30},${FLOOR - h}`, stroke: W, 'stroke-width': 7, 'stroke-linecap': 'round'}, g);
+  E('rect', {x: x - 56, y: FLOOR - h - 14, width: 112, height: 18, rx: 6, fill: W, stroke: INK, 'stroke-width': 4}, g);
+  return g;
+}
+function keys(p) {
+  const g = E('g', {}, p);
+  E('circle', {cx: 0, cy: 0, r: 11, fill: 'none', stroke: INK, 'stroke-width': 4}, g);
+  E('path', {d: 'M8,4 L30,10 L28,18 M20,8 L18,15', stroke: '#C9A43A', 'stroke-width': 7, 'stroke-linecap': 'round', fill: 'none'}, g);
+  E('path', {d: 'M8,4 L30,10', stroke: INK, 'stroke-width': 2, fill: 'none'}, g);
+  return g;
+}
+function shoeObj(p, x, y, col = '#7B4B3A') {
+  const g = E('g', {transform: `translate(${x} ${y})`}, p);
+  E('path', {d: 'M-34,0 C-36,-26 -20,-34 -6,-30 C8,-26 14,-16 30,-12 C46,-8 50,0 46,0 Z', fill: col, stroke: INK, 'stroke-width': 4}, g);
+  return g;
+}
+function icon(p, kind) {
+  const g = E('g', {}, p), W = '#A9784C';
+  const st = {stroke: INK, 'stroke-width': 4, 'stroke-linejoin': 'round'};
+  if (kind === 'chair') {
+    E('path', {d: 'M-40,40 L-40,-70 M-40,0 L40,0 L40,40', fill: 'none', ...st, 'stroke-width': 14, stroke: INK}, g);
+    E('path', {d: 'M-40,40 L-40,-70 M-40,0 L40,0 L40,40', fill: 'none', stroke: W, 'stroke-width': 7}, g);
+  } else if (kind === 'toilet') {
+    E('path', {d: 'M-44,-70 L-14,-70 L-14,-6 L-44,-6 Z', fill: '#F2F0EA', ...st}, g);
+    E('path', {d: 'M-30,-6 L46,-6 C46,24 20,30 4,30 L8,44 L-26,44 L-24,26 C-30,20 -30,10 -30,-6 Z', fill: '#F2F0EA', ...st}, g);
+    E('path', {d: 'M-30,-10 L48,-10', stroke: INK, 'stroke-width': 6}, g);
+  } else if (kind === 'car') {
+    E('path', {d: 'M-70,24 L-70,-6 C-60,-14 -46,-16 -34,-18 L-14,-44 L34,-44 L52,-18 C66,-16 72,-8 72,4 L72,24 Z', fill: '#6F8FB0', ...st}, g);
+    E('path', {d: 'M-8,-38 L28,-38 L40,-20 L-20,-20 Z', fill: '#DCE8F0', ...st, 'stroke-width': 3}, g);
+    for (const cx of [-40, 44]) E('circle', {cx, cy: 26, r: 15, fill: '#3A3A3A', ...st}, g);
+  } else if (kind === 'sofa') {
+    E('path', {d: 'M-74,30 L-74,-10 C-74,-22 -62,-24 -56,-18 L-56,-40 C-56,-52 56,-52 56,-40 L56,-18 C62,-24 74,-22 74,-10 L74,30 Z', fill: '#B5654F', ...st}, g);
+    E('path', {d: 'M-56,-2 L56,-2', stroke: INK, 'stroke-width': 4}, g);
+    E('path', {d: 'M-64,30 L-64,44 M64,30 L64,44', stroke: INK, 'stroke-width': 8, 'stroke-linecap': 'round'}, g);
+  }
+  return g;
+}
+function ladder(p, x, top, bot = FLOOR) {
+  const g = E('g', {filter: 'url(#soft)'}, p), W = '#9A7046', rungs = [];
+  for (const dx of [-50, 50]) { E('path', {d: `M${x + dx},${bot} L${x + dx * .9},${top}`, stroke: INK, 'stroke-width': 18, 'stroke-linecap': 'round'}, g); E('path', {d: `M${x + dx},${bot} L${x + dx * .9},${top}`, stroke: W, 'stroke-width': 10, 'stroke-linecap': 'round'}, g); }
+  const n = 5;
+  for (let i = 1; i <= n; i++) {
+    const y = bot - (bot - top) * i / (n + .5);
+    E('path', {d: `M${x - 48},${y} L${x + 48},${y}`, stroke: INK, 'stroke-width': 14, 'stroke-linecap': 'round'}, g);
+    rungs.push({y, el: E('path', {d: `M${x - 48},${y} L${x + 48},${y}`, stroke: W, 'stroke-width': 7, 'stroke-linecap': 'round'}, g)});
+  }
+  return {g, rungs};
+}
+function windowFrame(p, x, y, w, h) {
+  const g = E('g', {}, p);
+  E('rect', {x, y, width: w, height: h, fill: '#C9DCE0', stroke: INK, 'stroke-width': 6}, g);
+  E('path', {d: `M${x + w / 2},${y} L${x + w / 2},${y + h} M${x},${y + h / 2} L${x + w},${y + h / 2}`, stroke: INK, 'stroke-width': 5}, g);
+  E('rect', {x: x - 12, y: y + h, width: w + 24, height: 16, fill: '#A9784C', stroke: INK, 'stroke-width': 4}, g);
+  return g;
+}
+
+/* ───────── 場景 ───────── */
+const world = document.getElementById('world');
+const SC = [];
+function scene(id, build) {
+  const T = byId[id], g = E('g', {opacity: 0}, world);
+  const A = (i, off = 0) => T.start + T.beats[i] + off;            // 第 i 句開始（絕對秒）
+  const P = (i, f) => T.start + T.beats[i] + T.durs[i] * f;        // 第 i 句講到 f 比例時
+  const draw = build(g, T, A, P) || (() => {});
+  SC.push({id, T, g, draw, a: T.start, b: T.end, last: id === TIMING[TIMING.length - 1].id});
+}
+const header = (g, text, t0, t1, x = 120, y = 120) => { const h = R(g, x, y, t0, t1, 'left', 'tick'); HW(h, 0, 0, text, 74, '#2B231D'); brush(h, 0, 46, text.length * 70, '#C9573A', 9); return h; };
+
+// s0 開場：坐著練，站起來還是晃
+scene('s0', (g, T, A, P) => {
+  const ttl = R(g, 1060, 210, T.start + .2, A(0, -.2), 'fade', null);
+  HW(ttl, 0, -50, '功能性訓練', 132, '#2B231D', 'middle'); HW(ttl, 0, 80, '坐著練，就夠了嗎？', 66, '#7A3A24', 'middle');
+  const bear = new Critter(g, {s: 1.12, glasses: true, brows: true});
+  const sy = bear.seatY(), sx = 760;
+  const ch = chair(g, sx, sy);
+  g.insertBefore(ch.g, bear.g);
+  const fox = new Critter(g, {kind: 'fox', s: 1.05, fur: '#DE7438', shirt: '#A9C7DC', pants: '#4D5A72', badge: true});
+  const lab1 = R(g, 1120, 520, A(0, .3), A(0, 2.4), 'pop'); HW(lab1, 0, 0, '坐著抬膝', 62, '#2B231D'); brush(lab1, 0, 40, 240);
+  const lab2 = R(g, 1120, 600, A(0, 2.4), A(2, 0), 'pop'); HW(lab2, 0, 0, '坐著伸膝', 62, '#2B231D'); brush(lab2, 0, 40, 240);
+  const lab3 = R(g, 1120, 440, A(1, .2), A(2, 0), 'pop', 'ding'); HW(lab3, 0, 0, '腿力 ↑', 70, '#0F7A5E');
+  const cl = cloud(g, 760, 210); const clI = {g: cl.g, t0: A(2, 1.7), t1: A(3, 1.0), kind: 'drop'}; ITEMS.push(clI); CUES.push({t: clI.t0, type: 'wrong'});
+  const q = R(g, 1000, 300, A(3, 0), 1e9, 'pop'); HW(q, 0, 0, '？', 150, '#C9573A', 'middle');
+  return t => {
+    const lt = t;
+    let Pb;
+    if (t < A(2)) {
+      Pb = sitP(bear, sx, sy);
+      const s = bear.o.s, k = bear.k, rest = Pb.feet[0];
+      if (t >= A(0) && t < A(0, 2.4)) {            // 抬膝 ×2
+        const r = Math.sin(seg(t, A(0), A(0, 2.4)) * Math.PI * 2) ** 2;
+        Pb.feet[0] = [rest[0] - 6 * s * r, rest[1] - 74 * s * r];
+        Pb.hands[0] = [Pb.hands[0][0] - 10 * r, Pb.hands[0][1] - 40 * r];
+      } else if (t >= A(0, 2.4)) {                  // 伸膝 ×2～
+        const r = Math.sin(seg(t, A(0, 2.4), A(2)) * Math.PI * 3) ** 2;
+        Pb.feet[0] = [lerp(rest[0], sx + (k.L1 + k.L2 - 10) * s, r), lerp(rest[1], sy - 10 * s, r)];
+      }
+    } else {
+      const p = seg(t, A(2), A(2, 1.5));
+      Pb = sts(bear, sx, sy, p);
+      if (p >= 1) {                                 // 站起來後搖晃
+        const w = seg(t, A(2, 1.5), A(2, 2)) * (1 - seg(t, A(3, 1.6), A(3, 2.6)) * .6), ph = (t - A(2, 1.5)) * 5;
+        Pb.trunk += Math.sin(ph) * 7 * w; Pb.x += Math.sin(ph * .5) * 10 * w;
+        Pb.hands = [[Pb.x + 70 + Math.sin(ph) * 20 * w, Pb.y - 70 - Math.cos(ph) * 30 * w], [Pb.x - 40, Pb.y - 50 + Math.sin(ph) * 20 * w]];
+        Pb.mood = 'sad';
+      }
+    }
+    Pb.blink = blinkAt(lt);
+    bear.pose(Pb);
+    cl.drops.setAttribute('stroke-dashoffset', -(lt * 60) % 32);
+    cl.drops.querySelectorAll('path').forEach(pth => pth.setAttribute('stroke-dashoffset', (-(lt * 60) % 32).toFixed(1)));
+    if (t < A(3)) fox.pose(Object.assign(standP(fox, 2200), {o: 0}));
+    else { const P2 = walkP(fox, 2120, 1420, t, A(3), A(3, 2.4), {face: -1}); P2.blink = blinkAt(lt + 1); fox.pose(P2); }
+  };
+});
+
+// s1 什麼是功能性訓練
+scene('s1', (g, T, A, P) => {
+  header(g, '什麼是功能性訓練？', A(0, 0), A(2, -.3));
+  const fox = new Critter(g, {kind: 'fox', s: 1.05, fur: '#DE7438', shirt: '#A9C7DC', pants: '#4D5A72', badge: true});
+  const FX = 1560;
+  const bl = bulb(g, 1720, 300, 300);
+  const def = R(g, 160, 330, A(0, .5), A(2, -.3), 'up', 'ding'); HW(def, 0, 0, '＝ 把動作，練得像生活', 70, '#7A3A24');
+  const chips = ['站起來', '走路', '轉身', '彎腰撿東西'];
+  chips.forEach((c, i) => { const n = R(g, 200 + i * 260 + (i === 3 ? 20 : 0), 480, P(1, .05 + i * .18), A(2, -.3), 'pop'); E('rect', {x: -20, y: -46, width: c.length * 56 + 40, height: 92, rx: 46, fill: '#F3E8CF', stroke: INK, 'stroke-width': 4}, n); HW(n, 0, 2, c, 52, INK); });
+  // 後半：左右對照
+  const bL = new Critter(g, {s: .95, glasses: true, brows: true}), bR = new Critter(g, {s: .95, glasses: true, brows: true});
+  const sy = bL.seatY(), sxL = 470, sxR = 1330;
+  const cL = chair(g, sxL, sy), cR = chair(g, sxR, sy);
+  g.insertBefore(cL.g, bL.g); g.insertBefore(cR.g, bR.g);
+  const grpL = {g: E('g', {}, g)}; // 佔位
+  const tL = R(g, 520, 250, A(2, 0), 1e9, 'up'); HW(tL, 0, 0, '坐著伸膝', 66, INK, 'middle'); HW(tL, 0, 70, '練單一肌肉的力量', 46, '#5A4A3C', 'middle'); HW(tL, 0, 130, '✓ 很好的基礎', 46, '#0F7A5E', 'middle');
+  const tR = R(g, 1380, 250, A(3, 0), 1e9, 'up'); HW(tR, 0, 0, '站起來', 66, INK, 'middle'); HW(tR, 0, 70, '練一整個動作', 46, '#5A4A3C', 'middle');
+  const neq = R(g, 960, 560, A(3, .4), 1e9, 'pop', 'stamp'); HW(neq, 0, 0, '≠', 170, '#C9573A', 'middle');
+  return t => {
+    const half = t >= A(2, -.3);
+    const fo = 1 - seg(t, A(2, -.3), A(2, .1));
+    const fp = Object.assign(standP(fox, FX), {face: -1, o: fo, blink: blinkAt(t)});
+    const point = seg(t, A(0, .2), A(0, .8));
+    fp.hands = [[FX - lerp(30, 150, point), fox.standY - lerp(40, 300, point)], null];
+    fox.pose(fp);
+    bl.g.setAttribute('opacity', fo.toFixed(3));
+    bl.glow.setAttribute('opacity', (seg(t, A(0, .3), A(0, .6)) * (0.85 + Math.sin(t * 6) * .1)).toFixed(3));
+    bl.glass.setAttribute('fill', t > A(0, .3) ? '#FFF2B0' : '#E9E2CF');
+    const lo = seg(t, A(2, -.2), A(2, .3)), ro = seg(t, A(3, -.2), A(3, .3));
+    cL.g.setAttribute('opacity', lo); cR.g.setAttribute('opacity', ro);
+    const PL = sitP(bL, sxL, sy, {o: lo, blink: blinkAt(t + .5)});
+    const r = Math.sin(Math.max(0, t - A(2)) * 1.6) ** 2, k = bL.k, s = bL.o.s;
+    PL.feet[0] = [lerp(PL.feet[0][0], sxL + (k.L1 + k.L2 - 10) * s, r), lerp(PL.feet[0][1], sy - 10 * s, r)];
+    bL.pose(PL);
+    const cyc = Math.max(0, t - A(3)) % 4.2, pp = cyc < 1.6 ? cyc / 1.6 : cyc < 2.6 ? 1 : 1 - (cyc - 2.6) / 1.6;
+    bR.pose(sts(bR, sxR, sy, clamp(pp), {o: ro, blink: blinkAt(t + 1.3)}));
+    void half;
+  };
+});
+
+// s2 研究怎麼說
+scene('s2', (g, T, A, P) => {
+  header(g, '研究怎麼說？', A(0, 0), A(2, -.3));
+  const cA = R(g, 560, 520, A(0, .3), A(2, -.3), 'up', 'pop', -2);
+  paper(cA, 620, 400, '純肌力訓練', [['肌力 ↑↑', 92, '#0F7A5E'], ['肌力進步比較多', 44, '#5A4A3C']], {ly: 190, lh: 100});
+  const db = E('g', {transform: 'translate(-250 -144)'}, cA);
+  E('rect', {x: -10, y: -6, width: 70, height: 12, fill: '#7A7266', stroke: INK, 'stroke-width': 3}, db);
+  for (const x of [-22, 60]) E('rect', {x, y: -26, width: 18, height: 52, rx: 4, fill: '#4E5B79', stroke: INK, 'stroke-width': 3}, db);
+  const cB = R(g, 1360, 520, A(1, 0), A(2, -.3), 'up', 'pop', 2);
+  paper(cB, 620, 400, '練真實動作', [['日常生活 ↑↑', 84, '#0F7A5E'], ['半年後，效果還在 ✓', 44, '#5A4A3C']], {ly: 190, lh: 100});
+  const ft = R(g, 960, 790, A(1, .8), A(2, -.3), 'fade', null); HW(ft, 0, 0, 'de Vreede 等，2005｜70 歲以上女性，每週 3 次、12 週', 34, '#4A3B2E', 'middle', 400);
+  const big = R(g, 960, 380, A(2, 0), A(3, -.3), 'pop', 'stamp'); HW(big, 0, 0, '跌倒 −24%', 170, '#B9442A', 'middle');
+  const bs = R(g, 960, 560, A(2, .6), A(3, -.3), 'up'); HW(bs, 0, 0, '以平衡＋功能性動作為主的運動', 60, INK, 'middle'); HW(bs, 0, 90, 'Cochrane 系統性回顧，2019（59 篇研究）', 36, '#4A3B2E', 'middle', 400);
+  // 底子與轉換
+  const blk = R(g, 760, 0, A(3, 0), 1e9, 'up', 'pop');
+  E('rect', {x: -260, y: 700, width: 520, height: 170, rx: 14, fill: '#8E6A4A', stroke: INK, 'stroke-width': 5}, blk); HW(blk, 0, 785, '肌力', 84, '#FFF4DC', 'middle');
+  const blk2 = R(g, 760, 0, A(3, .9), 1e9, 'drop', 'stamp');
+  E('rect', {x: -190, y: 540, width: 380, height: 160, rx: 14, fill: '#3E8E7E', stroke: INK, 'stroke-width': 5}, blk2); HW(blk2, 0, 620, '功能', 84, '#FFF4DC', 'middle');
+  const tx = R(g, 1160, 600, A(3, .4), 1e9, 'left'); HW(tx, 0, 0, '功能是轉換', 74, '#2E6E62'); HW(tx, 0, 190, '肌力是底子', 74, '#6B4A2E');
+  const bear = new Critter(g, {s: .7, glasses: true, brows: true});
+  return t => {
+    const o = seg(t, A(3, 1.3), A(3, 1.8));
+    const x = 760, s = bear.o.s, y = 540 - (bear.k.L1 + bear.k.L2 - 3 + bear.k.AH) * s;
+    const up = Math.sin(Math.max(0, t - A(3, 1.8)) * 3) * .5 + .5;
+    bear.pose({x, y, trunk: 0, feet: [[x + 6 * s, 540 - bear.k.AH * s], [x - 4 * s, 540 - bear.k.AH * s]], o,
+      hands: [[x + 50 * s, y - (200 + 40 * up) * s], [x - 30 * s, y - (190 + 40 * up) * s]], blink: blinkAt(t)});
+  };
+});
+
+// s3 重點一：防跌，站著練
+scene('s3', (g, T, A, P) => {
+  header(g, '① 防跌，站著練', A(0, 0), 1e9);
+  const bear = new Critter(g, {s: 1.1, glasses: true, brows: true});
+  const bx = 600, sy = bear.seatY(), ch = chair(g, bx + 150, sy, {backH: 130});
+  const fox = new Critter(g, {kind: 'fox', s: 1.0, fur: '#DE7438', shirt: '#A9C7DC', pants: '#4D5A72', badge: true});
+  g.insertBefore(ch.g, bear.g);
+  // 跌倒發生時在做什麼
+  const chart = R(g, 1180, 300, A(1, 0), A(2, -.2), 'up', 'pop');
+  HW(chart, 0, 0, '跌倒時，正在做什麼？', 56, INK);
+  [['走路', 24, '#B9442A'], ['站著', 13, '#C9733A'], ['坐下', 12, '#C9733A']].forEach(([lab, v, col], i) => {
+    const y = 100 + i * 96;
+    HW(chart, 0, y, lab, 50, INK);
+    const bar = R(chart, 130, y, P(1, .15 + i * .2), 1e9, 'left', 'tick'); E('rect', {x: 0, y: -26, width: v * 19, height: 52, rx: 10, fill: col, stroke: INK, 'stroke-width': 4}, bar);
+    HW(bar, v * 19 + 20, 0, v + '%', 50, INK);
+  });
+  HW(chart, 0, 400, '長照機構錄影研究・227 次跌倒（Robinovitch 2013）', 30, '#4A3B2E', 'start', 400);
+  const steps = ['墊腳尖', '原地踏步', '前後腳站'];
+  const lst = R(g, 1130, 380, A(2, .1), 1e9, 'up', null);
+  const marks = steps.map((s, i) => { const y = i * 110; const bg = E('rect', {x: -24, y: y - 46, width: 420, height: 92, rx: 46, fill: '#F3E8CF', stroke: INK, 'stroke-width': 4, opacity: .5}, lst); HW(lst, 20, y, `${i + 1}  ${s}`, 58, INK); return bg; });
+  const help = R(g, 1170, 760, A(3, 0), 1e9, 'pop', 'ding'); HW(help, 0, 0, '旁邊有人陪 ♥', 56, '#B9442A');
+  const ex0 = A(2, 0), ex1 = A(2, 1.6), ex2 = A(2, 3.1);
+  return t => {
+    const s = bear.o.s, hold = [ch.backTop, [ch.backTop[0] - 10, ch.backTop[1] + 6]];
+    let Pb = standP(bear, bx, {hands: hold, blink: blinkAt(t)});
+    let which = -1;
+    const loopT = t > A(3, 2.4) ? (t - A(3, 2.4)) : -1;
+    if (t >= ex0 && t < ex1 || loopT >= 0) {
+      which = 0;
+      const r = Math.sin(((loopT >= 0 ? loopT : t - ex0) / 1.6) * Math.PI * 2) ** 2, lift = 22 * s * r;
+      Pb.y -= lift; Pb.feet = Pb.feet.map(f => [f[0], f[1] - lift]); Pb.heel = [32 * r, 32 * r];
+    } else if (t >= ex1 && t < ex2) {
+      which = 1;
+      const ph = (t - ex1) / 1.5 * 2;
+      const a = Math.max(0, Math.sin(ph * Math.PI)), b = Math.max(0, -Math.sin(ph * Math.PI));
+      Pb.feet = [[Pb.feet[0][0] + 30 * s * a, Pb.feet[0][1] - 78 * s * a], [Pb.feet[1][0] + 30 * s * b, Pb.feet[1][1] - 78 * s * b]];
+    } else if (t >= ex2) {
+      which = 2;
+      const p = out3(seg(t, ex2, ex2 + .6));
+      Pb.feet = [[Pb.feet[0][0] + 34 * s * p, Pb.feet[0][1]], [Pb.feet[1][0] - 26 * s * p, Pb.feet[1][1]]];
+    }
+    marks.forEach((m, i) => m.setAttribute('opacity', i === which ? 1 : .35));
+    marks.forEach((m, i) => m.setAttribute('fill', i === which ? '#F6D58B' : '#F3E8CF'));
+    bear.pose(Pb);
+    if (t < A(3)) fox.pose(Object.assign(standP(fox, 2200), {o: 0}));
+    else { const fp = walkP(fox, 2100, 420, t, A(3), A(3, 2.2), {face: 1}); fp.blink = blinkAt(t); fox.pose(fp); }
+  };
+});
+
+// s4 重點二：坐到站
+scene('s4', (g, T, A, P) => {
+  header(g, '② 轉位，練坐到站', A(0, 0), 1e9);
+  const bear = new Critter(g, {s: 1.12, glasses: true, brows: true});
+  const sx = 560, sy = bear.seatY();
+  const ch = chair(g, sx, sy), cha = chair(g, sx, sy, {arm: true});
+  const cush = E('g', {opacity: 0}, g);
+  E('rect', {x: sx - 96, y: sy - 34, width: 196, height: 34, rx: 14, fill: '#C8A66A', stroke: INK, 'stroke-width': 4}, cush);
+  g.insertBefore(ch.g, bear.g); g.insertBefore(cha.g, bear.g); g.insertBefore(cush, bear.g);
+  ['chair', 'toilet', 'car', 'sofa'].forEach((k, i) => {
+    const n = R(g, 1060 + i * 200, 300, P(1, .1 + i * .17), A(2, -.3), 'pop');
+    icon(n, k); HW(n, 0, 90, ['椅子', '馬桶', '汽車', '沙發'][i], 46, INK, 'middle');
+  });
+  const steps = ['腳往後收', '身體往前傾', '鼻子超過腳尖', '用力站起來'];
+  const lst = R(g, 1080, 330, A(2, 0), A(3, -.2), 'up', null);
+  const marks = steps.map((s, i) => { const y = i * 108; const bg = E('rect', {x: -24, y: y - 46, width: 520, height: 92, rx: 46, fill: '#F3E8CF', stroke: INK, 'stroke-width': 4, opacity: .4}, lst); HW(lst, 20, y, `${i + 1}  ${s}`, 58, INK); return bg; });
+  const tip1 = R(g, 1080, 380, A(3, 0), 1e9, 'up', 'ding'); HW(tip1, 0, 0, '太難？', 62, '#B9442A'); HW(tip1, 0, 84, '墊高椅面・用扶手', 58, INK);
+  const tip2 = R(g, 1080, 640, A(3, 4.3), 1e9, 'up', 'ding'); HW(tip2, 0, 0, '進步了？', 62, '#0F7A5E'); HW(tip2, 0, 84, '降低高度・慢慢坐下', 58, INK);
+  const nose = E('path', {d: '', stroke: '#B9442A', 'stroke-width': 5, 'stroke-dasharray': '12 10', fill: 'none', opacity: 0}, g);
+  const d0 = A(2, .1), d1 = A(2, 4.6);
+  return t => {
+    const s = bear.o.s;
+    let p = 0, seatH = sy, which = -1, arm = false;
+    if (t >= d0 && t < A(3)) { p = seg(t, d0, d1); which = p < .2 ? 0 : p < .45 ? 1 : p < .7 ? 2 : 3; }
+    if (t >= A(3) - 0.001 && t < A(3)) p = 1;
+    const c0 = A(3, 0);
+    let co = 0, ao = 0;
+    if (t >= c0) {
+      ao = seg(t, c0, c0 + .4) * (1 - seg(t, A(3, 4.3), A(3, 4.7)));
+      co = ao; seatH = sy - 34 * co;
+      arm = true;
+      if (t < c0 + .8) p = 1;
+      else if (t < c0 + 2.6) p = 1 - inout(seg(t, c0 + .8, c0 + 2.6));
+      else if (t < c0 + 4.3) p = inout(seg(t, c0 + 2.8, c0 + 4.3));
+      else p = 1 - sine(seg(t, A(3, 4.6), A(3, 7.6)));
+      seatH = t < A(3, 4.4) ? sy - 34 * co : sy;
+    }
+    cush.setAttribute('opacity', co.toFixed(3));
+    ch.g.setAttribute('opacity', (1 - ao).toFixed(3)); cha.g.setAttribute('opacity', ao.toFixed(3));
+    const Pb = sts(bear, sx, seatH, p, {blink: blinkAt(t)});
+    if (arm && t < A(3, 4.4) && p < .9) Pb.hands = [cha.armTop, [cha.armTop[0] - 8, cha.armTop[1]]];
+    bear.pose(Pb);
+    marks.forEach((m, i) => { m.setAttribute('opacity', i === which ? 1 : .35); m.setAttribute('fill', i === which ? '#F6D58B' : '#F3E8CF'); });
+    // 鼻子過腳尖的虛線
+    if (which === 2) {
+      const toeX = Pb.feet[0][0] + 46 * s;
+      nose.setAttribute('d', `M${toeX},${FLOOR - 4} L${toeX},${Pb.y - 330 * s}`); nose.setAttribute('opacity', 1);
+    } else nose.setAttribute('opacity', 0);
+  };
+});
+
+// s5 重點三：撿東西、拿鞋子
+scene('s5', (g, T, A, P) => {
+  header(g, '③ 撿東西、拿鞋子', A(0, 0), 1e9);
+  const ch = chair(g, 740, 760, {backH: 260});
+  const bear = new Critter(g, {s: 1.1, glasses: true, brows: true});
+  const kk = keys(bear.prop);
+  const dropK = keys(g);
+  const shoe = R(g, 0, 0, A(0, 2.6), A(2, -.3), 'drop', 'pop'); shoeObj(shoe, 1020, FLOOR - 2);
+  const bx = 700;
+  const labels = ['一手扶穩', '屁股往後推', '膝蓋彎、背打直', '伸手往下拿'];
+  const lst = R(g, 1180, 380, A(1, 0), A(2, -.3), 'up', null);
+  const marks = labels.map((s, i) => { const y = i * 104; const bg = E('rect', {x: -24, y: y - 44, width: 500, height: 88, rx: 44, fill: '#F3E8CF', stroke: INK, 'stroke-width': 4, opacity: .4}, lst); HW(lst, 20, y, s, 56, INK); return bg; });
+  // 進階：三種高度
+  const minis = [];
+  [['椅子上', 'chair'], ['小板凳', 'stool'], ['地板', 'floor']].forEach(([lab, kind], i) => {
+    const cx = 260 + i * 620;
+    const m = R(g, 0, 0, A(2, i * 1.5), 1e9, 'up', 'pop');
+    const sb = new Critter(m, {s: .8, glasses: true, brows: true});
+    let objY;
+    if (kind === 'chair') { const c = chair(m, cx + 190, FLOOR - 110, {backH: 170}); m.insertBefore(c.g, sb.g); objY = FLOOR - 124; }
+    else if (kind === 'stool') { m.insertBefore(stool(m, cx + 180, 60), sb.g); objY = FLOOR - 84; }
+    else objY = FLOOR - 12;
+    const cup = E('g', {}, m); E('path', {d: 'M-16,-30 L16,-30 L12,0 L-12,0 Z', fill: '#E6D3A6', stroke: INK, 'stroke-width': 4}, cup);
+    cup.setAttribute('transform', `translate(${cx + 175} ${objY + (kind === 'floor' ? 10 : 0)})`);
+    HW(m, cx + 80, 360, lab, 64, INK, 'middle');
+    if (i < 2) HW(m, cx + 390, 360, '→', 76, '#B9442A', 'middle');
+    minis.push({sb, cx, objY, kind, t0: A(2, i * 1.5)});
+  });
+  return t => {
+    const s = bear.o.s, hide = 1 - seg(t, A(2, -.3), A(2, .1));
+    ch.g.setAttribute('opacity', hide.toFixed(3));
+    const support = [[ch.backTop[0] + 30, ch.backTop[1] + 14]];
+    const kx = bx + 135, ky = FLOOR - 10;
+    // 鑰匙掉落
+    const fall = seg(t, A(0, 1.0), A(0, 1.6));
+    let hinge = 0, which = -1;
+    if (t >= A(1)) {
+      hinge = t < A(1, 2.2) ? inout(seg(t, A(1, .2), A(1, 2.2))) : t < A(1, 2.8) ? 1 : 1 - inout(seg(t, A(1, 2.8), A(1, 4.3)));
+      which = Math.min(3, Math.floor(seg(t, A(1), A(1, 2.6)) * 4));
+    }
+    const x = bx - 46 * s * hinge, y = bear.standY + 112 * s * hinge;
+    const Pb = {x, y, trunk: 72 * hinge, head: -22 * hinge, feet: [[bx + 8 * s, bear.ankleY], [bx - 4 * s, bear.ankleY]], blink: blinkAt(t), o: hide};
+    const near = hinge > .05 ? [lerp(x + 60, kx, hinge), lerp(bear.standY + 20, ky - 6, hinge)] : (t < A(0, 1.0) ? [bx + 70, bear.standY + 10] : null);
+    Pb.hands = [near, support[0]];
+    bear.pose(Pb);
+    const holding = t < A(0, 1.0) || t > A(1, 2.8);
+    kk.setAttribute('opacity', holding ? hide : 0);
+    dropK.setAttribute('opacity', !holding && t >= A(0, 1.0) ? hide : 0);
+    dropK.setAttribute('transform', `translate(${lerp(bx + 74, kx, fall)} ${lerp(bear.standY + 20, ky, fall * fall)}) rotate(${fall * 220})`);
+    marks.forEach((m, i) => { m.setAttribute('opacity', i <= which ? 1 : .35); m.setAttribute('fill', i === which ? '#F6D58B' : '#F3E8CF'); });
+    minis.forEach(mi => {
+      const sb = mi.sb, ss = sb.o.s, bxm = mi.cx;
+      const h = sine(seg(((t - mi.t0 - .3) % 3.2 + 3.2) % 3.2, 0, 1.2)) * (1 - sine(seg(((t - mi.t0 - .3) % 3.2 + 3.2) % 3.2, 1.8, 2.9)));
+      const depth = {chair: [.35, 30, 40], stool: [.7, 70, 60], floor: [1, 112, 74]}[mi.kind];
+      const hh = t > mi.t0 + .3 ? h : 0;
+      const xx = bxm - 40 * ss * hh * depth[0], yy = sb.standY + depth[1] * ss * hh;
+      sb.pose({x: xx, y: yy, trunk: depth[2] * hh, head: -20 * hh, feet: [[bxm + 8 * ss, sb.ankleY], [bxm - 4 * ss, sb.ankleY]],
+        hands: [hh > .05 ? [lerp(xx + 40, bxm + 175, hh), lerp(sb.standY + 20, mi.objY - 14, hh)] : null, null], blink: blinkAt(t + mi.cx)});
+    });
+  };
+});
+
+// s6 長照「復能」
+scene('s6', (g, T, A, P) => {
+  windowFrame(g, 130, 300, 260, 220);
+  header(g, '長照「復能」', A(0, 0), 1e9);
+  const sub = R(g, 120, 230, A(0, .9), A(1, -.2), 'up', 'ding'); HW(sub, 0, 0, '＝ 把功能性訓練帶進生活', 58, '#7A3A24');
+  const bear = new Critter(g, {s: 1.0, glasses: true, brows: true});
+  const sy = bear.seatY(), ch = chair(g, 330, sy); g.insertBefore(ch.g, bear.g);
+  const fox = new Critter(g, {kind: 'fox', s: 1.0, fur: '#DE7438', shirt: '#A9C7DC', pants: '#4D5A72', badge: true});
+  const kid = new Critter(g, {s: .88, fur: '#D99A55', shirt: '#D98A8F', pants: '#5C6B7A', bow: '#C9573A'});
+  const goal1 = R(g, 760, 240, A(1, 1.2), A(2, -.2), 'pop', 'pop', -3); paper(goal1, 480, 120, '我想自己上廁所', [], {ts: 50});
+  const goal2 = R(g, 1300, 260, A(1, 3.2), A(2, -.2), 'pop', 'pop', 3); paper(goal2, 440, 120, '我想自己洗澡', [], {ts: 50});
+  const lad = ladder(g, 760, 300); lad.g.setAttribute('opacity', 0);
+  const rungs = ['扶著站起來', '走到廁所', '自己坐下、站起'];
+  const rl = rungs.map((r, i) => { const n = R(g, 840, lad.rungs[i * 2].y, P(2, .1 + i * .28), 1e9, 'left', 'tick'); HW(n, 0, 0, r, 50, INK); return n; });
+  const note = R(g, 1600, 330, A(2, 2.2), 1e9, 'pop', 'pop'); HW(note, 0, 0, '家人一起學', 50, '#2E6E62', 'middle');
+  const ph = R(g, 1240, 190, A(3, 0), 1e9, 'pop', 'ding', -2); paper(ph, 500, 190, '1966 長照專線', [['撥打申請・照專到府評估', 38, '#4A3B2E']], {ts: 62, ly: 128});
+  return t => {
+    bear.pose(sitP(bear, 330, sy, {blink: blinkAt(t)}));
+    const fp = walkP(fox, 2050, 1180, t, A(1, 0), A(1, 2.2), {face: -1}); fp.blink = blinkAt(t + .7);
+    if (t > A(1, 2.2)) fp.hands = [[1180 - 110, fox.standY - 60], null];
+    fox.pose(fp);
+    lad.g.setAttribute('opacity', seg(t, A(2, -.2), A(2, .3)).toFixed(3));
+    lad.rungs.forEach((r, i) => r.el.setAttribute('stroke', t > P(2, .1 + Math.floor(i / 2) * .28) && i % 2 === 0 ? '#E3B04B' : '#9A7046'));
+    const kp = walkP(kid, 2150, 1560, t, A(2, 1.4), A(2, 3.2), {face: -1}); kp.blink = blinkAt(t + 1.9);
+    if (t > A(2, 3.2)) kp.hands = [[1560 - 60, kid.standY - 30], null];
+    kid.pose(kp);
+  };
+});
+
+// s7 總結
+scene('s7', (g, T, A, P) => {
+  const hd = R(g, 960, 150, A(0, 0), 1e9, 'pop', 'tick'); HW(hd, 0, 0, '記住三句話', 90, INK, 'middle'); brush(hd, -230, 56, 230);
+  const L = A(1), D = T.durs[1];
+  [['防跌', '站著練'], ['轉位', '練坐到站'], ['撿東西', '也是訓練']].forEach((c, i) => {
+    const n = R(g, 330 + i * 560, 370, L + D * [0, .3, .62][i], 1e9, 'pop', 'stamp', [-2, 1.5, -1][i]);
+    paper(n, 480, 230, c[0], [[c[1], 64, '#B9442A']], {ts: 60, ly: 150});
+  });
+  const dose = R(g, 960, 600, A(2, 0), 1e9, 'up', 'ding'); HW(dose, 0, 0, '每週 ≥ 3 次・持續 ≥ 3 個月・慢慢加難度', 60, '#2E6E62', 'middle');
+  const warn = R(g, 960, 720, A(3, 0), 1e9, 'up', 'pop');
+  E('rect', {x: -760, y: -50, width: 1520, height: 100, rx: 50, fill: '#F3E8CF', stroke: '#B9442A', 'stroke-width': 5}, warn);
+  HW(warn, 0, 2, '⚠ 頭暈、胸悶、最近跌倒過 → 先請醫師或治療師評估', 50, INK, 'middle');
+  const brand = R(g, 960, 830, A(3, T.durs[3] + .6), 1e9, 'fade', 'ding'); HW(brand, 0, 0, '愛迪樂｜鍾孟修 職能治療師', 52, '#2B231D', 'middle');
+  return t => {};
+});
+
+/* ───────── 主繪製 ───────── */
+const subEl = document.querySelector('#sub span'), turb = document.getElementById('turb');
+const ctx2d = document.createElement('canvas').getContext('2d');
+const textW = s => { ctx2d.font = '900 50px "Noto Sans TC","PingFang TC",sans-serif'; return ctx2d.measureText(s).width; };
+function subHTML(text) {
+  const s = text.replace(/[，。；、：]$/, '');
+  if (textW(s) <= 1560) return s;
+  const cut = [...s].map((c, i) => '，、；：'.includes(c) ? i + 1 : 0).filter(i => i > 2 && i < s.length - 2);
+  let best = null;
+  cut.forEach(a => { const ls = [s.slice(0, a), s.slice(a)], m = Math.max(...ls.map(textW)); if (!best || m < best.m) best = {ls, m}; });
+  return best ? best.ls.join('<br>') : s;
+}
+let curSub = null;
+function render(t) {
+  turb.setAttribute('seed', 1 + Math.floor(t * 8) % 7);
+  SC.forEach(s => {
+    const fin = s.a === 0 ? 1 : clamp((t - s.a) / .35), fout = s.last ? 1 : clamp((s.b - t) / .3);
+    const o = Math.min(fin, fout);
+    s.g.setAttribute('opacity', o.toFixed(3));
+    s.g.style.visibility = o > 0 ? 'visible' : 'hidden';
+    if (o > 0) s.draw(t);
+  });
+  ITEMS.forEach(it => updItem(it, t));
+  let sb = null;
+  for (const x of SUBS) if (t >= x.a && t < x.b) { sb = x; break; }
+  if (sb !== curSub) { curSub = sb; subEl.innerHTML = sb ? subHTML(sb.text) : ''; }
+  subEl.style.opacity = sb ? clamp(Math.min((t - sb.a) / .12, (sb.b - t) / .12)) : 0;
+}
+window.render = render; window.TOTAL = TOTAL;
+window.cues = () => {
+  const c = SC.slice(1).map(s => ({t: s.a - .15, type: 'whoosh'})).concat(CUES.filter(x => x.t < TOTAL));
+  return c.sort((a, b) => a.t - b.t);
+};
+makeWall();
+const stage = document.getElementById('stage');
+function fit() { const s = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `translate(-50%,-50%) scale(${s})`; }
+addEventListener('resize', fit); fit();
+if (!/render=1/.test(location.search)) {
+  const audio = new Audio('narration_mix.m4a');
+  let t = +(new URLSearchParams(location.search).get('t') || 0), last = performance.now(), paused = true;
+  const sync = () => { try { audio.currentTime = t; if (!paused) audio.play().catch(() => {}); else audio.pause(); } catch (e) {} };
+  const loop = now => { if (!paused) t = Math.min(TOTAL, t + (now - last) / 1000); last = now; render(t); requestAnimationFrame(loop); };
+  addEventListener('click', () => { paused = !paused; sync(); });
+  addEventListener('keydown', e => { if (e.code === 'Space') paused = !paused; if (e.key === 'ArrowRight') t = Math.min(TOTAL, t + 5); if (e.key === 'ArrowLeft') t = Math.max(0, t - 5); sync(); });
+  requestAnimationFrame(loop);
+} else render(0);
+</script>
+</body>
+</html>
