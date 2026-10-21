@@ -4,6 +4,8 @@
 
 **線上上課：** https://mattsue1003.github.io/functional-training-lesson/
 
+**YouTube 完整影片：** https://youtu.be/ZqhLCazpOps
+
 ## 三個重點
 
 1. **防跌，站著練**：跌倒大多發生在走路、站著、坐下時；扶穩固椅背練墊腳尖、原地踏步、前後腳站。
