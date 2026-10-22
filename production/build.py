@@ -65,24 +65,67 @@ def load_script():
         return json.load(f)
 
 
+PUNCT = "，、；：。？！"
+
+
+def clause_marks(line, a):
+    """依標點把一句切成子句，用語音中的停頓找出每個子句的起訖秒數（相對這句開頭）。"""
+    clauses, cur = [], ""
+    for ch in line:
+        if ch in PUNCT:
+            if cur: clauses.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    if cur: clauses.append(cur)
+    d = len(a) / SR
+    if len(clauses) <= 1:
+        return [[0.0, round(d, 3)]]
+    n = int(.01 * SR)
+    r = np.sqrt(np.convolve(a * a, np.ones(n) / n, mode="same"))
+    quiet = r < .02 * r.max()
+    gaps, i = [], 0
+    while i < len(a):
+        if quiet[i]:
+            j = i
+            while j < len(a) and quiet[j]: j += 1
+            if (j - i) / SR >= .06 and i > 0 and j < len(a): gaps.append((i / SR, j / SR))
+            i = j
+        else:
+            i += 1
+    total = sum(len(c) for c in clauses)
+    marks, used, prev = [], set(), 0.0
+    for c in range(len(clauses) - 1):          # 每個子句邊界：找最接近按字數比例預估位置的停頓
+        est = d * sum(len(x) for x in clauses[:c + 1]) / total
+        cand = [(abs((g[0] + g[1]) / 2 - est), k) for k, g in enumerate(gaps) if k not in used and g[0] > prev]
+        if cand and min(cand)[0] < .6:
+            k = min(cand)[1]; used.add(k); g = gaps[k]
+            marks.append([round(prev, 3), round(g[0], 3)]); prev = g[1]
+        else:
+            marks.append([round(prev, 3), round(est, 3)]); prev = est
+    marks.append([round(prev, 3), round(d, 3)])
+    return marks
+
+
 def cmd_tts():
     os.makedirs(TTS_DIR, exist_ok=True)
     scenes = load_script()
     timing, subs, clips = [], [], []
     t = 0.0
     for si, sc in enumerate(scenes):
-        beats, durs = [], []
+        beats, durs, marks = [], [], []
         lt = sc.get("lead", 0.4 if si == 0 else (0.35 if SHORT else 0.45))
         for li, line in enumerate(sc["lines"]):
             a = trim(read_audio(tts_clip(line)))
             d = len(a) / SR
-            beats.append(round(lt, 3)); durs.append(round(d, 3))
+            beats.append(round(lt, 3)); durs.append(round(d, 3)); marks.append(clause_marks(line, a))
             clips.append({"at": round(t + lt, 3), "file": tts_clip(line)})
             subs.append({"a": round(t + lt - 0.05, 3), "b": round(t + lt + d + 0.12, 3), "text": line})
             gap = 0.18 if line[-1] in "，；、：" else 0.34
             lt += d + gap
         end = t + lt + (0.3 if SHORT else 0.4) + sc.get("tail", 0)
-        timing.append({"id": sc["id"], "start": round(t, 3), "end": round(end, 3), "beats": beats, "durs": durs})
+        timing.append({"id": sc["id"], "start": round(t, 3), "end": round(end, 3), "beats": beats, "durs": durs,
+                       "lines": sc["lines"], "marks": marks})
         print(f"{sc['id']:5s} {t:7.2f} → {end:7.2f}  ({end - t:5.2f}s, {len(beats)} 句)")
         t = end
     with open(os.path.join(ROOT, f"timing{SFX}.js"), "w", encoding="utf-8") as f:

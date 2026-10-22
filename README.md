@@ -4,7 +4,7 @@
 
 **線上上課：** https://mattsue1003.github.io/functional-training-lesson/
 
-**YouTube 完整影片：** https://youtu.be/ZqhLCazpOps
+**YouTube 完整影片：** https://youtu.be/bia6Tzv6t3w
 
 ## 三個重點
 

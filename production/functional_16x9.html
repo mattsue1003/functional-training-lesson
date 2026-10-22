@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@700;900&display=swap">
 <style>
 html,body{margin:0;height:100%;background:#1b1612;overflow:hidden}
-#stage{width:1920px;height:1080px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);transform-origin:center;overflow:hidden;background:#A88D70}
+#stage{width:1920px;height:1080px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);transform-origin:center;overflow:hidden;background:#EFD9B6}
 #sv{position:absolute;inset:0;width:1920px;height:1080px}
 #sub{position:absolute;left:140px;right:140px;bottom:44px;display:flex;justify-content:center;pointer-events:none}
 #sub span{font:900 50px/1.42 "Noto Sans TC","PingFang TC",sans-serif;color:#fff;text-align:center;letter-spacing:1px;
@@ -22,10 +22,10 @@ html,body{margin:0;height:100%;background:#1b1612;overflow:hidden}
         <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G"/>
       </filter>
       <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-        <feDropShadow dx="-26" dy="-8" stdDeviation="5" flood-color="#33261b" flood-opacity="0.32"/>
+        <feDropShadow dx="-24" dy="-8" stdDeviation="6" flood-color="#8A5A30" flood-opacity="0.26"/>
       </filter>
       <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
-        <feDropShadow dx="-14" dy="-4" stdDeviation="4" flood-color="#33261b" flood-opacity="0.28"/>
+        <feDropShadow dx="-14" dy="-4" stdDeviation="4" flood-color="#8A5A30" flood-opacity="0.22"/>
       </filter>
       <radialGradient id="glow"><stop offset="0" stop-color="#FFF4C2" stop-opacity=".95"/><stop offset="1" stop-color="#FFF4C2" stop-opacity="0"/></radialGradient>
     </defs>
@@ -58,25 +58,27 @@ function shade(hex, k) {
 /* ───────── 牆面質感（像參考影片那種刮痕牆） ───────── */
 function makeWall() {
   const c = document.createElement('canvas'); c.width = 1920; c.height = 1080; const g = c.getContext('2d');
-  const gr = g.createLinearGradient(0, 0, 0, 1080); gr.addColorStop(0, '#BCA284'); gr.addColorStop(.75, '#AE9373'); gr.addColorStop(1, '#9A8064');
+  const gr = g.createLinearGradient(0, 0, 0, 1080); gr.addColorStop(0, '#F6E6CC'); gr.addColorStop(.75, '#EFD9B6'); gr.addColorStop(1, '#E2C49B');
   g.fillStyle = gr; g.fillRect(0, 0, 1920, 1080);
   for (let i = 0; i < 700; i++) {
     const x = rnd() * 1920, y = rnd() * 1080, r = 30 + rnd() * 170, dark = rnd() < .55;
     const rg = g.createRadialGradient(x, y, 0, x, y, r);
-    rg.addColorStop(0, dark ? 'rgba(70,48,30,.07)' : 'rgba(240,225,200,.07)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    rg.addColorStop(0, dark ? 'rgba(160,100,50,.06)' : 'rgba(255,248,232,.12)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = rg; g.fillRect(x - r, y - r, r * 2, r * 2);
   }
   for (let i = 0; i < 7000; i++) {
     const x = rnd() * 1920, y = rnd() * 1080, l = 4 + rnd() * 46, a = (rnd() - .5) * .9 + (rnd() < .3 ? 1.4 : 0);
-    g.strokeStyle = rnd() < .6 ? `rgba(60,40,24,${.04 + rnd() * .09})` : `rgba(255,245,225,${.04 + rnd() * .08})`;
+    g.strokeStyle = rnd() < .6 ? `rgba(130,82,40,${.03 + rnd() * .06})` : `rgba(255,250,238,${.05 + rnd() * .08})`;
     g.lineWidth = .6 + rnd() * 1.4; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
   }
   // 地板
-  const fg = g.createLinearGradient(0, FLOOR, 0, 1080); fg.addColorStop(0, 'rgba(70,50,34,.30)'); fg.addColorStop(1, 'rgba(50,34,22,.48)');
+  const fg = g.createLinearGradient(0, FLOOR, 0, 1080); fg.addColorStop(0, 'rgba(196,132,78,.30)'); fg.addColorStop(1, 'rgba(170,104,56,.40)');
   g.fillStyle = fg; g.fillRect(0, FLOOR, 1920, 1080 - FLOOR);
-  g.strokeStyle = 'rgba(45,30,20,.55)'; g.lineWidth = 3; g.beginPath();
+  g.strokeStyle = 'rgba(110,66,34,.5)'; g.lineWidth = 3; g.beginPath();
   for (let x = 0; x <= 1920; x += 20) g.lineTo(x, FLOOR + Math.sin(x * .013) * 2 + (rnd() - .5) * 1.5); g.stroke();
-  const vg = g.createRadialGradient(960, 520, 300, 960, 540, 1150); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(40,24,12,.42)');
+  const sun = g.createRadialGradient(1500, 120, 40, 1500, 120, 900); sun.addColorStop(0, 'rgba(255,236,190,.55)'); sun.addColorStop(1, 'rgba(255,236,190,0)');
+  g.fillStyle = sun; g.fillRect(0, 0, 1920, 1080);
+  const vg = g.createRadialGradient(960, 520, 420, 960, 540, 1200); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(150,90,40,.20)');
   g.fillStyle = vg; g.fillRect(0, 0, 1920, 1080);
   document.getElementById('bg').setAttribute('href', c.toDataURL('image/jpeg', .92));
 }
@@ -376,17 +378,29 @@ function windowFrame(p, x, y, w, h) {
 /* ───────── 場景 ───────── */
 const world = document.getElementById('world');
 const SC = [];
+// 第 i 句講到 sub 這幾個字的時刻：用 build.py 量到的子句停頓，子句內再按字數內插
+function wordTime(T, i, sub) {
+  const text = T.lines[i], idx = text.indexOf(sub), PU = '，、；：。？！';
+  if (idx < 0) throw new Error('wordTime: 「' + sub + '」不在：' + text);
+  const cls = []; let cur = [];
+  [...text].forEach((ch, j) => { if (PU.includes(ch)) { if (cur.length) cls.push(cur); cur = []; } else cur.push(j); });
+  if (cur.length) cls.push(cur);
+  let c = cls.findIndex(cl => cl.includes(idx)); if (c < 0) c = 0;
+  const f = cls[c].indexOf(idx) / cls[c].length, m = T.marks[i][Math.min(c, T.marks[i].length - 1)];
+  return T.start + T.beats[i] + m[0] + f * (m[1] - m[0]);
+}
 function scene(id, build) {
   const T = byId[id], g = E('g', {opacity: 0}, world);
   const A = (i, off = 0) => T.start + T.beats[i] + off;            // 第 i 句開始（絕對秒）
   const P = (i, f) => T.start + T.beats[i] + T.durs[i] * f;        // 第 i 句講到 f 比例時
-  const draw = build(g, T, A, P) || (() => {});
+  const W = (i, sub, off = 0) => wordTime(T, i, sub) + off;        // 第 i 句講到某幾個字時
+  const draw = build(g, T, A, P, W) || (() => {});
   SC.push({id, T, g, draw, a: T.start, b: T.end, last: id === TIMING[TIMING.length - 1].id});
 }
 const header = (g, text, t0, t1, x = 120, y = 120) => { const h = R(g, x, y, t0, t1, 'left', 'tick'); HW(h, 0, 0, text, 74, '#2B231D'); brush(h, 0, 46, text.length * 70, '#C9573A', 9); return h; };
 
 // s0 開場：坐著練，站起來還是晃
-scene('s0', (g, T, A, P) => {
+scene('s0', (g, T, A, P, W) => {
   const ttl = R(g, 1060, 210, T.start + .2, A(0, -.2), 'fade', null);
   HW(ttl, 0, -50, '功能性訓練', 132, '#2B231D', 'middle'); HW(ttl, 0, 80, '坐著練，就夠了嗎？', 66, '#7A3A24', 'middle');
   const bear = new Critter(g, {s: 1.12, glasses: true, brows: true});
@@ -394,30 +408,31 @@ scene('s0', (g, T, A, P) => {
   const ch = chair(g, sx, sy);
   g.insertBefore(ch.g, bear.g);
   const fox = new Critter(g, {kind: 'fox', s: 1.05, fur: '#DE7438', shirt: '#A9C7DC', pants: '#4D5A72', badge: true});
-  const lab1 = R(g, 1120, 520, A(0, .3), A(0, 2.4), 'pop'); HW(lab1, 0, 0, '坐著抬膝', 62, '#2B231D'); brush(lab1, 0, 40, 240);
-  const lab2 = R(g, 1120, 600, A(0, 2.4), A(2, 0), 'pop'); HW(lab2, 0, 0, '坐著伸膝', 62, '#2B231D'); brush(lab2, 0, 40, 240);
-  const lab3 = R(g, 1120, 440, A(1, .2), A(2, 0), 'pop', 'ding'); HW(lab3, 0, 0, '腿力 ↑', 70, '#0F7A5E');
-  const clG = R(g, 880, 190, A(2, 1.7), A(3, 1.0), 'drop', 'wrong'); const cl = cloud(clG, 0, 0);
+  const kl0 = W(0, '坐著抬膝蓋'), ke0 = W(0, '坐著把膝蓋伸直'), st0 = W(2, '一站起來', -.1);
+  const lab1 = R(g, 1120, 520, kl0, ke0, 'pop'); HW(lab1, 0, 0, '坐著抬膝', 62, '#2B231D'); brush(lab1, 0, 40, 240);
+  const lab2 = R(g, 1120, 600, ke0, st0, 'pop'); HW(lab2, 0, 0, '坐著伸膝', 62, '#2B231D'); brush(lab2, 0, 40, 240);
+  const lab3 = R(g, 1120, 440, W(1, '腿是比較有力'), st0, 'pop', 'ding'); HW(lab3, 0, 0, '腿力 ↑', 70, '#0F7A5E');
+  const clG = R(g, 880, 190, W(2, '搖搖晃晃'), A(3, 1.0), 'drop', 'wrong'); const cl = cloud(clG, 0, 0);
   const q = R(g, 1000, 300, A(3, 0), 1e9, 'pop'); HW(q, 0, 0, '？', 150, '#C9573A', 'middle');
   return t => {
     const lt = t;
     let Pb;
-    if (t < A(2)) {
+    if (t < st0) {
       Pb = sitP(bear, sx, sy);
       const s = bear.o.s, k = bear.k, rest = Pb.feet[0];
-      if (t >= A(0) && t < A(0, 2.4)) {            // 抬膝 ×2
-        const r = Math.sin(seg(t, A(0), A(0, 2.4)) * Math.PI * 2) ** 2;
+      if (t >= kl0 && t < ke0) {                    // 抬膝 ×2
+        const r = Math.sin(seg(t, kl0, ke0) * Math.PI * 2) ** 2;
         Pb.feet[0] = [rest[0] - 6 * s * r, rest[1] - 74 * s * r];
         Pb.hands[0] = [Pb.hands[0][0] - 10 * r, Pb.hands[0][1] - 40 * r];
-      } else if (t >= A(0, 2.4)) {                  // 伸膝 ×2～
-        const r = Math.sin(seg(t, A(0, 2.4), A(2)) * Math.PI * 3) ** 2;
+      } else if (t >= ke0) {                        // 伸膝 ×2～
+        const r = Math.sin(seg(t, ke0, st0) * Math.PI * 3) ** 2;
         Pb.feet[0] = [lerp(rest[0], sx + (k.L1 + k.L2 - 10) * s, r), lerp(rest[1], sy - 10 * s, r)];
       }
     } else {
-      const p = seg(t, A(2), A(2, 1.5));
+      const p = seg(t, st0, st0 + 1.4);
       Pb = sts(bear, sx, sy, p);
       if (p >= 1) {                                 // 站起來後搖晃
-        const w = seg(t, A(2, 1.5), A(2, 2)) * (1 - seg(t, A(3, 1.6), A(3, 2.6)) * .6), ph = (t - A(2, 1.5)) * 5;
+        const w = seg(t, st0 + 1.4, st0 + 1.9) * (1 - seg(t, A(3, 1.6), A(3, 2.6)) * .6), ph = (t - st0 - 1.4) * 5;
         Pb.trunk += Math.sin(ph) * 7 * w; Pb.x += Math.sin(ph * .5) * 10 * w;
         Pb.hands = [[Pb.x + 70 + Math.sin(ph) * 20 * w, Pb.y - 70 - Math.cos(ph) * 30 * w], [Pb.x - 40, Pb.y - 50 + Math.sin(ph) * 20 * w]];
         Pb.mood = 'sad';
@@ -433,14 +448,14 @@ scene('s0', (g, T, A, P) => {
 });
 
 // s1 什麼是功能性訓練
-scene('s1', (g, T, A, P) => {
+scene('s1', (g, T, A, P, W) => {
   header(g, '什麼是功能性訓練？', A(0, 0), A(2, -.3));
   const fox = new Critter(g, {kind: 'fox', s: 1.05, fur: '#DE7438', shirt: '#A9C7DC', pants: '#4D5A72', badge: true});
   const FX = 1560;
   const bl = bulb(g, 1720, 300, 300);
-  const def = R(g, 160, 330, A(0, .5), A(2, -.3), 'up', 'ding'); HW(def, 0, 0, '＝ 把動作，練得像生活', 70, '#7A3A24');
+  const def = R(g, 160, 330, W(0, '就是把動作'), A(2, -.3), 'up', 'ding'); HW(def, 0, 0, '＝ 把動作，練得像生活', 70, '#7A3A24');
   const chips = ['站起來', '走路', '轉身', '彎腰撿東西'];
-  chips.forEach((c, i) => { const n = R(g, 200 + i * 260 + (i === 3 ? 20 : 0), 480, P(1, .05 + i * .18), A(2, -.3), 'pop'); E('rect', {x: -20, y: -46, width: c.length * 56 + 40, height: 92, rx: 46, fill: '#F3E8CF', stroke: INK, 'stroke-width': 4}, n); HW(n, 0, 2, c, 52, INK); });
+  chips.forEach((c, i) => { const n = R(g, 200 + i * 260 + (i === 3 ? 20 : 0), 480, W(1, c), A(2, -.3), 'pop'); E('rect', {x: -20, y: -46, width: c.length * 56 + 40, height: 92, rx: 46, fill: '#F3E8CF', stroke: INK, 'stroke-width': 4}, n); HW(n, 0, 2, c, 52, INK); });
   // 後半：左右對照
   const bL = new Critter(g, {s: .95, glasses: true, brows: true}), bR = new Critter(g, {s: .95, glasses: true, brows: true});
   const sy = bL.seatY(), sxL = 470, sxR = 1330;
@@ -448,8 +463,9 @@ scene('s1', (g, T, A, P) => {
   g.insertBefore(cL.g, bL.g); g.insertBefore(cR.g, bR.g);
   const grpL = {g: E('g', {}, g)}; // 佔位
   const tL = R(g, 520, 250, A(2, 0), 1e9, 'up'); HW(tL, 0, 0, '坐著伸膝', 66, INK, 'middle'); HW(tL, 0, 70, '練單一肌肉的力量', 46, '#5A4A3C', 'middle'); HW(tL, 0, 130, '✓ 很好的基礎', 46, '#0F7A5E', 'middle');
-  const tR = R(g, 1380, 250, A(3, 0), 1e9, 'up'); HW(tR, 0, 0, '站起來', 66, INK, 'middle'); HW(tR, 0, 70, '練一整個動作', 46, '#5A4A3C', 'middle');
-  const neq = R(g, 960, 560, A(3, .4), 1e9, 'pop', 'stamp'); HW(neq, 0, 0, '≠', 170, '#C9573A', 'middle');
+  const r0 = W(3, '站起來', -.2);
+  const tR = R(g, 1380, 250, r0, 1e9, 'up'); HW(tR, 0, 0, '站起來', 66, INK, 'middle'); HW(tR, 0, 70, '練一整個動作', 46, '#5A4A3C', 'middle');
+  const neq = R(g, 960, 560, W(3, '不等於'), 1e9, 'pop', 'stamp'); HW(neq, 0, 0, '≠', 170, '#C9573A', 'middle');
   return t => {
     const half = t >= A(2, -.3);
     const fo = 1 - seg(t, A(2, -.3), A(2, .1));
@@ -460,49 +476,49 @@ scene('s1', (g, T, A, P) => {
     bl.g.setAttribute('opacity', fo.toFixed(3));
     bl.glow.setAttribute('opacity', (seg(t, A(0, .3), A(0, .6)) * (0.85 + Math.sin(t * 6) * .1)).toFixed(3));
     bl.glass.setAttribute('fill', t > A(0, .3) ? '#FFF2B0' : '#E9E2CF');
-    const lo = seg(t, A(2, -.2), A(2, .3)), ro = seg(t, A(3, -.2), A(3, .3));
+    const lo = seg(t, A(2, -.2), A(2, .3)), ro = seg(t, r0, r0 + .5);
     cL.g.setAttribute('opacity', lo); cR.g.setAttribute('opacity', ro);
     const PL = sitP(bL, sxL, sy, {o: lo, blink: blinkAt(t + .5)});
     const r = Math.sin(Math.max(0, t - A(2)) * 1.6) ** 2, k = bL.k, s = bL.o.s;
     PL.feet[0] = [lerp(PL.feet[0][0], sxL + (k.L1 + k.L2 - 10) * s, r), lerp(PL.feet[0][1], sy - 10 * s, r)];
     bL.pose(PL);
-    const cyc = Math.max(0, t - A(3)) % 4.2, pp = cyc < 1.6 ? cyc / 1.6 : cyc < 2.6 ? 1 : 1 - (cyc - 2.6) / 1.6;
+    const cyc = Math.max(0, t - r0 - .2) % 4.2, pp = cyc < 1.6 ? cyc / 1.6 : cyc < 2.6 ? 1 : 1 - (cyc - 2.6) / 1.6;
     bR.pose(sts(bR, sxR, sy, clamp(pp), {o: ro, blink: blinkAt(t + 1.3)}));
     void half;
   };
 });
 
 // s2 研究怎麼說
-scene('s2', (g, T, A, P) => {
+scene('s2', (g, T, A, P, W) => {
   header(g, '研究怎麼說？', A(0, 0), A(2, -.3));
-  const cA = R(g, 560, 520, A(0, .3), A(2, -.3), 'up', 'pop', -2);
+  const cA = R(g, 560, 520, W(0, '純肌力訓練'), A(2, -.3), 'up', 'pop', -2);
   paper(cA, 620, 400, '純肌力訓練', [['肌力 ↑↑', 92, '#0F7A5E'], ['肌力進步比較多', 44, '#5A4A3C']], {ly: 190, lh: 100});
   const db = E('g', {transform: 'translate(-250 -144)'}, cA);
   E('rect', {x: -10, y: -6, width: 70, height: 12, fill: '#7A7266', stroke: INK, 'stroke-width': 3}, db);
   for (const x of [-22, 60]) E('rect', {x, y: -26, width: 18, height: 52, rx: 4, fill: '#4E5B79', stroke: INK, 'stroke-width': 3}, db);
-  const cB = R(g, 1360, 520, A(1, 0), A(2, -.3), 'up', 'pop', 2);
+  const cB = R(g, 1360, 520, W(1, '練真實動作'), A(2, -.3), 'up', 'pop', 2);
   paper(cB, 620, 400, '練真實動作', [['日常生活 ↑↑', 84, '#0F7A5E'], ['半年後，效果還在 ✓', 44, '#5A4A3C']], {ly: 190, lh: 100});
   const ft = R(g, 960, 790, A(1, .8), A(2, -.3), 'fade', null); HW(ft, 0, 0, 'de Vreede 等，2005｜70 歲以上女性，每週 3 次、12 週', 34, '#4A3B2E', 'middle', 400);
-  const big = R(g, 960, 380, A(2, 0), A(3, -.3), 'pop', 'stamp'); HW(big, 0, 0, '跌倒 −24%', 170, '#B9442A', 'middle');
-  const bs = R(g, 960, 560, A(2, .6), A(3, -.3), 'up'); HW(bs, 0, 0, '以平衡＋功能性動作為主的運動', 60, INK, 'middle'); HW(bs, 0, 90, 'Cochrane 系統性回顧，2019（59 篇研究）', 36, '#4A3B2E', 'middle', 400);
+  const big = R(g, 960, 380, W(2, '跌倒大約'), A(3, -.3), 'pop', 'stamp'); HW(big, 0, 0, '跌倒 −24%', 170, '#B9442A', 'middle');
+  const bs = R(g, 960, 560, W(2, '以平衡'), A(3, -.3), 'up'); HW(bs, 0, 0, '以平衡＋功能性動作為主的運動', 60, INK, 'middle'); HW(bs, 0, 90, 'Cochrane 系統性回顧，2019（59 篇研究）', 36, '#4A3B2E', 'middle', 400);
   // 底子與轉換
-  const blk = R(g, 760, 0, A(3, 0), 1e9, 'up', 'pop');
+  const blk = R(g, 760, 0, W(3, '肌力是底子'), 1e9, 'up', 'pop');
   E('rect', {x: -260, y: 700, width: 520, height: 170, rx: 14, fill: '#8E6A4A', stroke: INK, 'stroke-width': 5}, blk); HW(blk, 0, 785, '肌力', 84, '#FFF4DC', 'middle');
-  const blk2 = R(g, 760, 0, A(3, .9), 1e9, 'drop', 'stamp');
+  const blk2 = R(g, 760, 0, W(3, '功能是轉換'), 1e9, 'drop', 'stamp');
   E('rect', {x: -190, y: 540, width: 380, height: 160, rx: 14, fill: '#3E8E7E', stroke: INK, 'stroke-width': 5}, blk2); HW(blk2, 0, 620, '功能', 84, '#FFF4DC', 'middle');
-  const tx = R(g, 1160, 600, A(3, .4), 1e9, 'left'); HW(tx, 0, 0, '功能是轉換', 74, '#2E6E62'); HW(tx, 0, 190, '肌力是底子', 74, '#6B4A2E');
+  const tx = R(g, 1160, 600, W(3, '肌力是底子'), 1e9, 'left'); HW(tx, 0, 0, '功能是轉換', 74, '#2E6E62'); HW(tx, 0, 190, '肌力是底子', 74, '#6B4A2E');
   const bear = new Critter(g, {s: .7, glasses: true, brows: true});
   return t => {
-    const o = seg(t, A(3, 1.3), A(3, 1.8));
+    const o = seg(t, W(3, '功能是轉換', .4), W(3, '功能是轉換', .9));
     const x = 760, s = bear.o.s, y = 540 - (bear.k.L1 + bear.k.L2 - 3 + bear.k.AH) * s;
-    const up = Math.sin(Math.max(0, t - A(3, 1.8)) * 3) * .5 + .5;
+    const up = Math.sin(Math.max(0, t - W(3, '功能是轉換', .9)) * 3) * .5 + .5;
     bear.pose({x, y, trunk: 0, feet: [[x + 6 * s, 540 - bear.k.AH * s], [x - 4 * s, 540 - bear.k.AH * s]], o,
       hands: [[x + 50 * s, y - (200 + 40 * up) * s], [x - 30 * s, y - (190 + 40 * up) * s]], blink: blinkAt(t)});
   };
 });
 
 // s3 重點一：防跌，站著練
-scene('s3', (g, T, A, P) => {
+scene('s3', (g, T, A, P, W) => {
   header(g, '① 防跌，站著練', A(0, 0), 1e9);
   const bear = new Critter(g, {s: 1.1, glasses: true, brows: true});
   const bx = 600, sy = bear.seatY(), ch = chair(g, bx + 150, sy, {backH: 130});
@@ -514,7 +530,7 @@ scene('s3', (g, T, A, P) => {
   [['走路', 24, '#B9442A'], ['站著', 13, '#C9733A'], ['坐下', 12, '#C9733A']].forEach(([lab, v, col], i) => {
     const y = 100 + i * 96;
     HW(chart, 0, y, lab, 50, INK);
-    const bar = R(chart, 130, y, P(1, .15 + i * .2), 1e9, 'left', 'tick'); E('rect', {x: 0, y: -26, width: v * 19, height: 52, rx: 10, fill: col, stroke: INK, 'stroke-width': 4}, bar);
+    const bar = R(chart, 130, y, W(1, lab), 1e9, 'left', 'tick'); E('rect', {x: 0, y: -26, width: v * 19, height: 52, rx: 10, fill: col, stroke: INK, 'stroke-width': 4}, bar);
     HW(bar, v * 19 + 20, 0, v + '%', 50, INK);
   });
   HW(chart, 0, 400, '長照機構錄影研究・227 次跌倒（Robinovitch 2013）', 30, '#4A3B2E', 'start', 400);
@@ -522,7 +538,7 @@ scene('s3', (g, T, A, P) => {
   const lst = R(g, 1130, 380, A(2, .1), 1e9, 'up', null);
   const marks = steps.map((s, i) => { const y = i * 110; const bg = E('rect', {x: -24, y: y - 46, width: 420, height: 92, rx: 46, fill: '#F3E8CF', stroke: INK, 'stroke-width': 4, opacity: .5}, lst); HW(lst, 20, y, `${i + 1}  ${s}`, 58, INK); return bg; });
   const help = R(g, 1170, 760, A(3, 0), 1e9, 'pop', 'ding'); HW(help, 0, 0, '旁邊有人陪 ♥', 56, '#B9442A');
-  const ex0 = A(2, 0), ex1 = A(2, 1.6), ex2 = A(2, 3.1);
+  const ex0 = W(2, '墊腳尖', -.15), ex1 = W(2, '原地踏步', -.15), ex2 = W(2, '前後腳站', -.15);
   return t => {
     const s = bear.o.s, hold = [ch.backTop, [ch.backTop[0] - 10, ch.backTop[1] + 6]];
     let Pb = standP(bear, bx, {hands: hold, blink: blinkAt(t)});
@@ -530,11 +546,11 @@ scene('s3', (g, T, A, P) => {
     const loopT = t > A(3, 2.4) ? (t - A(3, 2.4)) : -1;
     if (t >= ex0 && t < ex1 || loopT >= 0) {
       which = 0;
-      const r = Math.sin(((loopT >= 0 ? loopT : t - ex0) / 1.6) * Math.PI * 2) ** 2, lift = 22 * s * r;
+      const r = loopT >= 0 ? Math.sin(loopT / 1.6 * Math.PI * 2) ** 2 : Math.sin(seg(t, ex0, ex1) * Math.PI), lift = 22 * s * r;
       Pb.y -= lift; Pb.feet = Pb.feet.map(f => [f[0], f[1] - lift]); Pb.heel = [32 * r, 32 * r];
     } else if (t >= ex1 && t < ex2) {
       which = 1;
-      const ph = (t - ex1) / 1.5 * 2;
+      const ph = seg(t, ex1, ex2) * 2;
       const a = Math.max(0, Math.sin(ph * Math.PI)), b = Math.max(0, -Math.sin(ph * Math.PI));
       Pb.feet = [[Pb.feet[0][0] + 30 * s * a, Pb.feet[0][1] - 78 * s * a], [Pb.feet[1][0] + 30 * s * b, Pb.feet[1][1] - 78 * s * b]];
     } else if (t >= ex2) {
@@ -551,7 +567,7 @@ scene('s3', (g, T, A, P) => {
 });
 
 // s4 重點二：坐到站
-scene('s4', (g, T, A, P) => {
+scene('s4', (g, T, A, P, W) => {
   header(g, '② 轉位，練坐到站', A(0, 0), 1e9);
   const bear = new Critter(g, {s: 1.12, glasses: true, brows: true});
   const sx = 560, sy = bear.seatY();
@@ -560,37 +576,38 @@ scene('s4', (g, T, A, P) => {
   E('rect', {x: sx - 96, y: sy - 34, width: 196, height: 34, rx: 14, fill: '#C8A66A', stroke: INK, 'stroke-width': 4}, cush);
   g.insertBefore(ch.g, bear.g); g.insertBefore(cha.g, bear.g); g.insertBefore(cush, bear.g);
   ['chair', 'toilet', 'car', 'sofa'].forEach((k, i) => {
-    const n = R(g, 1060 + i * 200, 300, P(1, .1 + i * .17), A(2, -.3), 'pop');
+    const n = R(g, 1060 + i * 200, 300, W(1, ['椅子', '馬桶', '汽車', '沙發'][i]), A(2, -.3), 'pop');
     icon(n, k); HW(n, 0, 90, ['椅子', '馬桶', '汽車', '沙發'][i], 46, INK, 'middle');
   });
   const steps = ['腳往後收', '身體往前傾', '鼻子超過腳尖', '用力站起來'];
   const lst = R(g, 1080, 330, A(2, 0), A(3, -.2), 'up', null);
   const marks = steps.map((s, i) => { const y = i * 108; const bg = E('rect', {x: -24, y: y - 46, width: 520, height: 92, rx: 46, fill: '#F3E8CF', stroke: INK, 'stroke-width': 4, opacity: .4}, lst); HW(lst, 20, y, `${i + 1}  ${s}`, 58, INK); return bg; });
   const tip1 = R(g, 1080, 380, A(3, 0), 1e9, 'up', 'ding'); HW(tip1, 0, 0, '太難？', 62, '#B9442A'); HW(tip1, 0, 84, '墊高椅面・用扶手', 58, INK);
-  const tip2 = R(g, 1080, 640, A(3, 4.3), 1e9, 'up', 'ding'); HW(tip2, 0, 0, '進步了？', 62, '#0F7A5E'); HW(tip2, 0, 84, '降低高度・慢慢坐下', 58, INK);
+  const tip2 = R(g, 1080, 640, W(3, '進步了'), 1e9, 'up', 'ding'); HW(tip2, 0, 0, '進步了？', 62, '#0F7A5E'); HW(tip2, 0, 84, '降低高度・慢慢坐下', 58, INK);
   const nose = E('path', {d: '', stroke: '#B9442A', 'stroke-width': 5, 'stroke-dasharray': '12 10', fill: 'none', opacity: 0}, g);
-  const d0 = A(2, .1), d1 = A(2, 4.6);
+  // 分解動作：每一步在講到那幾個字時發生
+  const Q = [W(2, '腳往後收', -.1), W(2, '身體往前傾', -.1), W(2, '鼻子超過腳尖', -.1), W(2, '再用力站起來', -.1), A(2) + T.durs[2] + .3], PV = [0, .2, .45, .5, 1];
+  const pAt = t => { for (let k = 0; k < 4; k++) if (t < Q[k + 1]) return lerp(PV[k], PV[k + 1], inout(seg(t, Q[k], Q[k + 1]))); return 1; };
+  const c1 = W(3, '墊高椅面', -.1), sitE = c1 + 1.3, stA = Math.max(W(3, '用扶手'), sitE + .1), stE = stA + 1.3;
+  const fadeC = Math.max(W(3, '降低高度'), stE), slow0 = Math.max(W(3, '慢慢坐下'), stE + .2);
   return t => {
     const s = bear.o.s;
     let p = 0, seatH = sy, which = -1, arm = false;
-    if (t >= d0 && t < A(3)) { p = seg(t, d0, d1); which = p < .2 ? 0 : p < .45 ? 1 : p < .7 ? 2 : 3; }
-    if (t >= A(3) - 0.001 && t < A(3)) p = 1;
-    const c0 = A(3, 0);
+    if (t >= Q[0] && t < c1) { p = pAt(t); which = t < Q[1] ? 0 : t < Q[2] ? 1 : t < Q[3] ? 2 : 3; }
     let co = 0, ao = 0;
-    if (t >= c0) {
-      ao = seg(t, c0, c0 + .4) * (1 - seg(t, A(3, 4.3), A(3, 4.7)));
-      co = ao; seatH = sy - 34 * co;
-      arm = true;
-      if (t < c0 + .8) p = 1;
-      else if (t < c0 + 2.6) p = 1 - inout(seg(t, c0 + .8, c0 + 2.6));
-      else if (t < c0 + 4.3) p = inout(seg(t, c0 + 2.8, c0 + 4.3));
-      else p = 1 - sine(seg(t, A(3, 4.6), A(3, 7.6)));
-      seatH = t < A(3, 4.4) ? sy - 34 * co : sy;
+    if (t >= c1) {
+      ao = seg(t, c1, c1 + .4) * (1 - seg(t, fadeC, fadeC + .4));
+      co = ao; arm = true;
+      if (t < c1 + .1) p = 1;
+      else if (t < sitE) p = 1 - inout(seg(t, c1 + .1, sitE));
+      else if (t < stE) p = inout(seg(t, stA, stE));
+      else p = 1 - sine(seg(t, slow0, slow0 + 3));
+      seatH = t < fadeC + .1 ? sy - 34 * co : sy;
     }
     cush.setAttribute('opacity', co.toFixed(3));
     ch.g.setAttribute('opacity', (1 - ao).toFixed(3)); cha.g.setAttribute('opacity', ao.toFixed(3));
     const Pb = sts(bear, sx, seatH, p, {blink: blinkAt(t)});
-    if (arm && t < A(3, 4.4) && p < .9) Pb.hands = [cha.armTop, [cha.armTop[0] - 8, cha.armTop[1]]];
+    if (arm && t < stE && p < .9) Pb.hands = [cha.armTop, [cha.armTop[0] - 8, cha.armTop[1]]];
     bear.pose(Pb);
     marks.forEach((m, i) => { m.setAttribute('opacity', i === which ? 1 : .35); m.setAttribute('fill', i === which ? '#F6D58B' : '#F3E8CF'); });
     // 鼻子過腳尖的虛線
@@ -602,13 +619,15 @@ scene('s4', (g, T, A, P) => {
 });
 
 // s5 重點三：撿東西、拿鞋子
-scene('s5', (g, T, A, P) => {
+scene('s5', (g, T, A, P, W) => {
   header(g, '③ 撿東西、拿鞋子', A(0, 0), 1e9);
   const ch = chair(g, 740, 760, {backH: 260});
   const bear = new Critter(g, {s: 1.1, glasses: true, brows: true});
   const kk = keys(bear.prop);
   const dropK = keys(g);
-  const shoe = R(g, 0, 0, A(0, 2.6), A(2, -.3), 'drop', 'pop'); shoeObj(shoe, 1020, FLOOR - 2);
+  const kd = W(0, '東西掉了'), h0 = W(1, '屁股往後推', -.1), h1 = W(1, '再伸手往下拿', .5);
+  const LB = [W(1, '一手扶穩'), W(1, '屁股往後推'), W(1, '膝蓋微彎'), W(1, '再伸手往下拿')];
+  const shoe = R(g, 0, 0, W(0, '彎腰拿鞋子'), A(2, -.3), 'drop', 'pop'); shoeObj(shoe, 1020, FLOOR - 2);
   const bx = 700;
   const labels = ['一手扶穩', '屁股往後推', '膝蓋彎、背打直', '伸手往下拿'];
   const lst = R(g, 1180, 380, A(1, 0), A(2, -.3), 'up', null);
@@ -617,7 +636,7 @@ scene('s5', (g, T, A, P) => {
   const minis = [];
   [['椅子上', 'chair'], ['小板凳', 'stool'], ['地板', 'floor']].forEach(([lab, kind], i) => {
     const cx = 260 + i * 620;
-    const m = R(g, 0, 0, A(2, i * 1.5), 1e9, 'up', 'pop');
+    const m = R(g, 0, 0, W(2, lab), 1e9, 'up', 'pop');
     const sb = new Critter(m, {s: .8, glasses: true, brows: true});
     let objY;
     if (kind === 'chair') { const c = chair(m, cx + 190, FLOOR - 110, {backH: 170}); m.insertBefore(c.g, sb.g); objY = FLOOR - 124; }
@@ -627,7 +646,7 @@ scene('s5', (g, T, A, P) => {
     cup.setAttribute('transform', `translate(${cx + 175} ${objY + (kind === 'floor' ? 10 : 0)})`);
     HW(m, cx + 80, 360, lab, 64, INK, 'middle');
     if (i < 2) HW(m, cx + 390, 360, '→', 76, '#B9442A', 'middle');
-    minis.push({sb, cx, objY, kind, t0: A(2, i * 1.5)});
+    minis.push({sb, cx, objY, kind, t0: W(2, lab)});
   });
   return t => {
     const s = bear.o.s, hide = 1 - seg(t, A(2, -.3), A(2, .1));
@@ -635,20 +654,20 @@ scene('s5', (g, T, A, P) => {
     const support = [[ch.backTop[0] + 30, ch.backTop[1] + 14]];
     const kx = bx + 135, ky = FLOOR - 10;
     // 鑰匙掉落
-    const fall = seg(t, A(0, 1.0), A(0, 1.6));
+    const fall = seg(t, kd, kd + .6);
     let hinge = 0, which = -1;
-    if (t >= A(1)) {
-      hinge = t < A(1, 2.2) ? inout(seg(t, A(1, .2), A(1, 2.2))) : t < A(1, 2.8) ? 1 : 1 - inout(seg(t, A(1, 2.8), A(1, 4.3)));
-      which = Math.min(3, Math.floor(seg(t, A(1), A(1, 2.6)) * 4));
+    if (t >= LB[0]) {
+      hinge = t < h1 ? inout(seg(t, h0, h1)) : t < h1 + .6 ? 1 : 1 - inout(seg(t, h1 + .6, h1 + 2.1));
+      which = LB.filter(x => t >= x).length - 1;
     }
     const x = bx - 46 * s * hinge, y = bear.standY + 112 * s * hinge;
     const Pb = {x, y, trunk: 72 * hinge, head: -22 * hinge, feet: [[bx + 8 * s, bear.ankleY], [bx - 4 * s, bear.ankleY]], blink: blinkAt(t), o: hide};
-    const near = hinge > .05 ? [lerp(x + 60, kx, hinge), lerp(bear.standY + 20, ky - 6, hinge)] : (t < A(0, 1.0) ? [bx + 70, bear.standY + 10] : null);
+    const near = hinge > .05 ? [lerp(x + 60, kx, hinge), lerp(bear.standY + 20, ky - 6, hinge)] : (t < kd ? [bx + 70, bear.standY + 10] : null);
     Pb.hands = [near, support[0]];
     bear.pose(Pb);
-    const holding = t < A(0, 1.0) || t > A(1, 2.8);
+    const holding = t < kd || t > h1 + .6;
     kk.setAttribute('opacity', holding ? hide : 0);
-    dropK.setAttribute('opacity', !holding && t >= A(0, 1.0) ? hide : 0);
+    dropK.setAttribute('opacity', !holding && t >= kd ? hide : 0);
     dropK.setAttribute('transform', `translate(${lerp(bx + 74, kx, fall)} ${lerp(bear.standY + 20, ky, fall * fall)}) rotate(${fall * 220})`);
     marks.forEach((m, i) => { m.setAttribute('opacity', i <= which ? 1 : .35); m.setAttribute('fill', i === which ? '#F6D58B' : '#F3E8CF'); });
     minis.forEach(mi => {
@@ -664,7 +683,7 @@ scene('s5', (g, T, A, P) => {
 });
 
 // s6 長照「復能」
-scene('s6', (g, T, A, P) => {
+scene('s6', (g, T, A, P, W) => {
   windowFrame(g, 130, 300, 260, 220);
   header(g, '長照「復能」', A(0, 0), 1e9);
   const sub = R(g, 120, 230, A(0, .9), A(1, -.2), 'up', 'ding'); HW(sub, 0, 0, '＝ 把功能性訓練帶進生活', 58, '#7A3A24');
@@ -672,32 +691,34 @@ scene('s6', (g, T, A, P) => {
   const sy = bear.seatY(), ch = chair(g, 330, sy); g.insertBefore(ch.g, bear.g);
   const fox = new Critter(g, {kind: 'fox', s: 1.0, fur: '#DE7438', shirt: '#A9C7DC', pants: '#4D5A72', badge: true});
   const kid = new Critter(g, {s: .88, fur: '#D99A55', shirt: '#D98A8F', pants: '#5C6B7A', bow: '#C9573A'});
-  const goal1 = R(g, 760, 240, A(1, 1.2), A(2, -.2), 'pop', 'pop', -3); paper(goal1, 480, 120, '我想自己上廁所', [], {ts: 50});
-  const goal2 = R(g, 1300, 260, A(1, 3.2), A(2, -.2), 'pop', 'pop', 3); paper(goal2, 440, 120, '我想自己洗澡', [], {ts: 50});
+  const goal1 = R(g, 760, 240, W(1, '自己上廁所'), A(2, -.2), 'pop', 'pop', -3); paper(goal1, 480, 120, '我想自己上廁所', [], {ts: 50});
+  const goal2 = R(g, 1300, 260, W(1, '自己洗澡'), A(2, -.2), 'pop', 'pop', 3); paper(goal2, 440, 120, '我想自己洗澡', [], {ts: 50});
   const lad = ladder(g, 760, 300); lad.g.setAttribute('opacity', 0);
   const rungs = ['扶著站起來', '走到廁所', '自己坐下、站起'];
-  const rl = rungs.map((r, i) => { const n = R(g, 840, lad.rungs[i * 2].y, P(2, .1 + i * .28), 1e9, 'left', 'tick'); HW(n, 0, 0, r, 50, INK); return n; });
-  const note = R(g, 1600, 330, A(2, 2.2), 1e9, 'pop', 'pop'); HW(note, 0, 0, '家人一起學', 50, '#2E6E62', 'middle');
-  const ph = R(g, 1240, 190, A(3, 0), 1e9, 'pop', 'ding', -2); paper(ph, 500, 190, '1966 長照專線', [['撥打申請・照專到府評估', 38, '#4A3B2E']], {ts: 62, ly: 128});
+  const RT = [W(2, '在真實'), W(2, '情境裡'), W(2, '一步步練')];
+  const rl = rungs.map((r, i) => { const n = R(g, 840, lad.rungs[i * 2].y, RT[i], 1e9, 'left', 'tick'); HW(n, 0, 0, r, 50, INK); return n; });
+  const fam = W(2, '家人也一起學');
+  const note = R(g, 1600, 330, fam + .5, 1e9, 'pop', 'pop'); HW(note, 0, 0, '家人一起學', 50, '#2E6E62', 'middle');
+  const ph = R(g, 1240, 190, W(3, '1966', -.2), 1e9, 'pop', 'ding', -2); paper(ph, 500, 190, '1966 長照專線', [['撥打申請・照專到府評估', 38, '#4A3B2E']], {ts: 62, ly: 128});
   return t => {
     bear.pose(sitP(bear, 330, sy, {blink: blinkAt(t)}));
     const fp = walkP(fox, 2050, 1180, t, A(1, 0), A(1, 2.2), {face: -1}); fp.blink = blinkAt(t + .7);
     if (t > A(1, 2.2)) fp.hands = [[1180 - 110, fox.standY - 60], null];
     fox.pose(fp);
     lad.g.setAttribute('opacity', seg(t, A(2, -.2), A(2, .3)).toFixed(3));
-    lad.rungs.forEach((r, i) => r.el.setAttribute('stroke', t > P(2, .1 + Math.floor(i / 2) * .28) && i % 2 === 0 ? '#E3B04B' : '#9A7046'));
-    const kp = walkP(kid, 2150, 1560, t, A(2, 1.4), A(2, 3.2), {face: -1}); kp.blink = blinkAt(t + 1.9);
-    if (t > A(2, 3.2)) kp.hands = [[1560 - 60, kid.standY - 30], null];
+    lad.rungs.forEach((r, i) => r.el.setAttribute('stroke', i % 2 === 0 && i / 2 < RT.length && t > RT[i / 2] ? '#E3B04B' : '#9A7046'));
+    const kp = walkP(kid, 2150, 1560, t, fam - .8, fam + 1.0, {face: -1}); kp.blink = blinkAt(t + 1.9);
+    if (t > fam + 1.0) kp.hands = [[1560 - 60, kid.standY - 30], null];
     kid.pose(kp);
   };
 });
 
 // s7 總結
-scene('s7', (g, T, A, P) => {
+scene('s7', (g, T, A, P, W) => {
   const hd = R(g, 960, 150, A(0, 0), 1e9, 'pop', 'tick'); HW(hd, 0, 0, '記住三句話', 90, INK, 'middle'); brush(hd, -230, 56, 230);
   const L = A(1), D = T.durs[1];
   [['防跌', '站著練'], ['轉位', '練坐到站'], ['撿東西', '也是訓練']].forEach((c, i) => {
-    const n = R(g, 330 + i * 560, 370, L + D * [0, .3, .62][i], 1e9, 'pop', 'stamp', [-2, 1.5, -1][i]);
+    const n = R(g, 330 + i * 560, 370, W(1, c[0]), 1e9, 'pop', 'stamp', [-2, 1.5, -1][i]);
     paper(n, 480, 230, c[0], [[c[1], 64, '#B9442A']], {ts: 60, ly: 150});
   });
   const dose = R(g, 960, 600, A(2, 0), 1e9, 'up', 'ding'); HW(dose, 0, 0, '每週 ≥ 3 次・持續 ≥ 3 個月・慢慢加難度', 60, '#2E6E62', 'middle');
